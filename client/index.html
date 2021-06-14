@@ -3,16 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <title>SZ-Validator</title>
-    <script src="main.js"></script>
-    <script src="script.js"></script>
-    <script src="script.js"></script>
+    <!--    <script src="main.js"></script>-->
+    <!--    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/build/pdf.min.js"></script>-->
+    <!--    <script src="https://cdn.jsdelivr.net/npm/pdf2json@1.2.1/pdfparser.min.js"></script>-->
+    <!--    <script src="bundle.js"></script>-->
+    <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
 </head>
-<body>
-<h4>U N D E R   C O N S T R U C T I O N</h4>
+<body style="background-color: #8EC5FC;
+background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
+">
+<h4>U N D E R C O N S T R U C T I O N</h4>
 <br>
 <h6>Stundenzettel-Validator</h6>
-<input type="file" id="uploadInput">
-<button type="button" id="startValidationButton">Validate</button>
-<button type="button" id="tryy">tryyyyy</button>
+<input type="file" id="uploadInput" onchange="readFile()" multiple>
+<button type="button" id="startValidationButton" onclick="readFile()">Validate</button>
 </body>
+
+<script>
+    // wannabe month js enum
+    const m = {
+        1: 'Januar',
+        2: 'Februar',
+        3: 'März',
+        4: 'April',
+        5: 'Mai',
+        6: 'Juni',
+        7: 'Juli',
+        8: 'August',
+        9: 'September',
+        10: 'Oktober',
+        11: 'November',
+        12: 'Dezember',
+    }
+    Object.freeze(m);
+
+    async function readFile() {
+
+        let pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+
+        const docList = document.getElementById('uploadInput').files;
+
+        for (let i = 0; i < docList.length; i++) {
+            const doc = docList[i];
+            let temp = doc.arrayBuffer();
+            // console.log(await temp);
+
+            try {
+                let worker = pdfjsLib.getDocument({data: await temp});
+                worker.promise.then((pdf) => {
+                    console.log('pdf');
+                    // console.log(pdf);
+                    let pageNumber = 1;
+                    pdf.getPage(pageNumber).then(async function (page) {
+                        // console.log('Page loaded');
+                        // console.log(page);
+                        let tokenizedText = await page.getTextContent();
+                        prepareValidation(i, tokenizedText.items);
+                        const pageText = tokenizedText.items.map(token => token.str).join("");
+                        // console.log(pageText);
+                    })
+                });
+            } catch (e) {
+                console.log(e);
+            }
+        }
+    }
+
+    // -- creates a "Stundenzettel" object by given tokens
+    function prepareValidation(index, itemArr) {
+        // -- stundenzettel object
+        let sz = {
+            lName: '',
+            fName: '',
+            bDate: '',
+            month: '',
+            fBereich: '',
+            isSigned: false,
+        }
+        // -- cleanup tokenArray for further work
+        let arr = itemArr.map(item => item.str.trim())
+        arr = arr.filter(item => item.trim() !== '');
+
+        // -- extract header and save values in sz object attributes for validation
+        let header = arr.slice(0, 10);
+        sz.lName = header[1];
+        sz.fName = header[5];
+        sz.bDate = header[9];
+        sz.month = header[3];
+        sz.fBereich = header[7];
+
+        // -- extract table and extract entries from it for validation
+        let endOfSlice = arr.indexOf('Gesamtstunden:')
+        let table = arr.slice(14, endOfSlice);
+        // console.log(table);
+        let entries = [];
+        for (let i = 0; i < table.length; i++) {
+            if (table[i].indexOf(':') !== -1) {
+                let sum = table[i + 2];
+                let mid = sum.indexOf(':');
+                const hours = +sum.slice(0, mid);
+                let minutes = +sum.slice(mid + 1, sum.length + 1);
+                minutes = minutes / 60;
+                sum = hours + minutes;
+                entries.push({day: table[i - 1], start: table[i], end: table[i + 1], sum: sum})
+
+                i = i + 2;
+            }
+        }
+
+        // -- sum up all worked hours from entries array for validation
+        let endSum = 0;
+        entries.map((ent) => endSum += +ent.sum)
+
+        // -- log results
+        console.log('____________ R E S U L T _____________');
+        console.log('PDF: ' + index);
+        console.log(endSum);
+        console.log('--------------------------------------')
+    }
+</script>
 </html>

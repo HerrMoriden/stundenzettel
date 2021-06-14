@@ -1,14 +1,23 @@
 // Import dependencies
-const fs = require("fs");
 const PDFParser = require("pdf2json");
 
 // Get all the filenames from the patients folder
-const files = fs.readdirSync("../dirWithPDFs");
+// const files = fs.readdirSync("../dirWithPDFs");
 
+let files = []
+
+function helloworld() {
+    return 'Hello World'
+}
+
+function filesUpload() {
+    let temp = (event.target).files;
+    files.push(temp[0]);
+}
 let finalResult = [];
 
 // Make a IIFE so we can run asynchronous code
-(async () => {
+async function readPdfFile() {
 
     // Await all of the patients to be passed
     // For each file in the patients folder
@@ -18,7 +27,8 @@ let finalResult = [];
         let pdfParser = new PDFParser(this, 1);
 
         // Load the pdf document
-        pdfParser.loadPDF(`../dirWithPDFs/${file}`);
+        // pdfParser.loadPDF(`../dirWithPDFs/${file}`);
+        pdfParser.loadPDF(file);
 
         // Parsed the document
         let document = await new Promise(async (resolve, reject) => {
@@ -53,10 +63,7 @@ let finalResult = [];
     }));
 
     // Save the extracted information to a json file
-    fs.writeFileSync("document.json", JSON.stringify(finalResult));
+    // fs.writeFileSync("document.json", JSON.stringify(finalResult));
 
-})();
+}
 
-/**
- * reference for later https://www.youtube.com/watch?v=b2dLDqmYT4I
- */

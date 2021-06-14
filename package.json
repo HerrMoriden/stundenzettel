@@ -13,8 +13,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pdf2json": "^1.2.1",
-    "xlsx": "^0.16.9",
-    "@types/node": "^15.3.0"
+    "@types/node": "^15.3.0",
+    "brfs": "^2.0.2",
+    "browserify": "^17.0.0",
+    "browserify-fs": "^1.0.0",
+
+    "xlsx": "^0.16.9"
   }
 }
