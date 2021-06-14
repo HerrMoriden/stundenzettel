@@ -120,6 +120,8 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
         console.log('____________ R E S U L T _____________');
         console.log('PDF: ' + index);
         console.log(endSum);
+        let gesamtstunden = +(arr[endOfSlice + 1].slice(0, arr[endOfSlice + 1].indexOf(':')))
+        console.log('Correct: ' + (endSum === gesamtstunden));
         console.log('--------------------------------------')
     }
 </script>
