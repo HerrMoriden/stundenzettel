@@ -7,16 +7,43 @@
     <!--    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/build/pdf.min.js"></script>-->
     <!--    <script src="https://cdn.jsdelivr.net/npm/pdf2json@1.2.1/pdfparser.min.js"></script>-->
     <!--    <script src="bundle.js"></script>-->
+    <!--&lt;!&ndash;    <script src="https://cdn.jsdelivr.net/npm/date-holidays@3.6.0/dist/umd.min.js"></script>&ndash;&gt; may need this later for checking if a day is a holiday-->
     <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
 </head>
 <body style="background-color: #8EC5FC;
 background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
 ">
-<h4>U N D E R C O N S T R U C T I O N</h4>
-<br>
-<h6>Stundenzettel-Validator</h6>
-<input type="file" id="uploadInput" onchange="readFile()" multiple>
-<button type="button" id="startValidationButton" onclick="readFile()">Validate</button>
+
+
+<div class="jumbotron">
+    <h1 class="display-4">U N D E R C O N S T R U C T I O N</h1>
+    <p class="lead">Stundenzettel-Validator</p>
+    <hr class="my-4">
+    <p class="lead">
+
+    <div class="input-group flex-nowrap">
+        <input type="file" id="uploadInput" onchange="readFile()" multiple class="form-control"
+               placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
+    </div>
+    </p>
+</div>
+
+<button class="btn btn-primary" type="button" id="startValidationButton" onclick="readFile()">Validate</button>
+
+<table id="resultTable">
+
+</table>
 </body>
 
 <script>
@@ -60,7 +87,7 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
                         // console.log(page);
                         let tokenizedText = await page.getTextContent();
                         prepareValidation(i, tokenizedText.items);
-                        const pageText = tokenizedText.items.map(token => token.str).join("");
+                        // const pageText = tokenizedText.items.map(token => token.str).join("");
                         // console.log(pageText);
                     })
                 });
@@ -80,6 +107,7 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
             month: '',
             fBereich: '',
             isSigned: false,
+            gesamtstunden: 0,
         }
         // -- cleanup tokenArray for further work
         let arr = itemArr.map(item => item.str.trim())
@@ -93,11 +121,11 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
         sz.month = header[3];
         sz.fBereich = header[7];
 
-        // -- extract table and extract entries from it for validation
+        // -- extract table and extract rowArrayEntries from it for validation
         let endOfSlice = arr.indexOf('Gesamtstunden:')
         let table = arr.slice(14, endOfSlice);
-        // console.log(table);
-        let entries = [];
+        console.log(table);
+        let rowArrayEntries = [];
         for (let i = 0; i < table.length; i++) {
             if (table[i].indexOf(':') !== -1) {
                 let sum = table[i + 2];
@@ -106,23 +134,30 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
                 let minutes = +sum.slice(mid + 1, sum.length + 1);
                 minutes = minutes / 60;
                 sum = hours + minutes;
-                entries.push({day: table[i - 1], start: table[i], end: table[i + 1], sum: sum})
+                rowArrayEntries.push({day: table[i - 1], start: table[i], end: table[i + 1], sum: sum})
 
                 i = i + 2;
             }
         }
 
-        // -- sum up all worked hours from entries array for validation
-        let endSum = 0;
-        entries.map((ent) => endSum += +ent.sum)
+        // -- sum up all worked hours from rowArrayEntries array for validation
+        let sumOfWorkHours = 0;
+        rowArrayEntries.map((ent) => sumOfWorkHours += +ent.sum)
 
         // -- log results
         console.log('____________ R E S U L T _____________');
         console.log('PDF: ' + index);
-        console.log(endSum);
-        let gesamtstunden = +(arr[endOfSlice + 1].slice(0, arr[endOfSlice + 1].indexOf(':')))
-        console.log('Correct: ' + (endSum === gesamtstunden));
+        console.log(sumOfWorkHours);
+        sz.gesamtstunden = +(arr[endOfSlice + 1].slice(0, arr[endOfSlice + 1].indexOf(':')))
+        let fakeValidation = sumOfWorkHours === sz.gesamtstunden;
+        console.log('Correct: ' + fakeValidation);
         console.log('--------------------------------------')
+
+        validation(index, sumOfWorkHours);
+    }
+
+    function validation(index, sumOfWorkHours) {
+
     }
 </script>
 </html>
