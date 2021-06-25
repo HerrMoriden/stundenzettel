@@ -9,6 +9,8 @@
     <!--    <script src="bundle.js"></script>-->
     <!--&lt;!&ndash;    <script src="https://cdn.jsdelivr.net/npm/date-holidays@3.6.0/dist/umd.min.js"></script>&ndash;&gt; may need this later for checking if a day is a holiday-->
     <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/holiday-de@1.1.3/holiday-de.js"></script>
+<!--    <script src="https://cdn.jsdelivr.net/npm/german-holiday@1.2.0/german-holiday.js"></script>-->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
@@ -20,23 +22,31 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
+    <script type="application/javascript" src="nextScript.js"></script>
 </head>
 <body style="background-color: #8EC5FC;
-background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
+background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 80%);
 ">
 
 
-<div class="jumbotron">
-    <h1 class="display-4">U N D E R C O N S T R U C T I O N</h1>
+<div class="jumbotron" style="
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+    align-items: center;
+background-color: #8EC5FC;
+background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 90%);
+">
+    <div>
+        <h1 class="display-4">U N D E R C O N S T R U C T I O N</h1>
+    </div>
     <p class="lead">Stundenzettel-Validator</p>
     <hr class="my-4">
-    <p class="lead">
 
     <div class="input-group flex-nowrap">
         <input type="file" id="uploadInput" onchange="readFile()" multiple class="form-control"
                placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
     </div>
-    </p>
 </div>
 
 <button class="btn btn-primary" type="button" id="startValidationButton" onclick="readFile()">Validate</button>
@@ -45,119 +55,4 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%);
 
 </table>
 </body>
-
-<script>
-    // wannabe month js enum
-    const m = {
-        1: 'Januar',
-        2: 'Februar',
-        3: 'März',
-        4: 'April',
-        5: 'Mai',
-        6: 'Juni',
-        7: 'Juli',
-        8: 'August',
-        9: 'September',
-        10: 'Oktober',
-        11: 'November',
-        12: 'Dezember',
-    }
-    Object.freeze(m);
-
-    async function readFile() {
-
-        let pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
-
-        const docList = document.getElementById('uploadInput').files;
-
-        for (let i = 0; i < docList.length; i++) {
-            const doc = docList[i];
-            let temp = doc.arrayBuffer();
-            // console.log(await temp);
-
-            try {
-                let worker = pdfjsLib.getDocument({data: await temp});
-                worker.promise.then((pdf) => {
-                    console.log('pdf');
-                    // console.log(pdf);
-                    let pageNumber = 1;
-                    pdf.getPage(pageNumber).then(async function (page) {
-                        // console.log('Page loaded');
-                        // console.log(page);
-                        let tokenizedText = await page.getTextContent();
-                        prepareValidation(i, tokenizedText.items);
-                        // const pageText = tokenizedText.items.map(token => token.str).join("");
-                        // console.log(pageText);
-                    })
-                });
-            } catch (e) {
-                console.log(e);
-            }
-        }
-    }
-
-    // -- creates a "Stundenzettel" object by given tokens
-    function prepareValidation(index, itemArr) {
-        // -- stundenzettel object
-        let sz = {
-            lName: '',
-            fName: '',
-            bDate: '',
-            month: '',
-            fBereich: '',
-            isSigned: false,
-            gesamtstunden: 0,
-        }
-        // -- cleanup tokenArray for further work
-        let arr = itemArr.map(item => item.str.trim())
-        arr = arr.filter(item => item.trim() !== '');
-
-        // -- extract header and save values in sz object attributes for validation
-        let header = arr.slice(0, 10);
-        sz.lName = header[1];
-        sz.fName = header[5];
-        sz.bDate = header[9];
-        sz.month = header[3];
-        sz.fBereich = header[7];
-
-        // -- extract table and extract rowArrayEntries from it for validation
-        let endOfSlice = arr.indexOf('Gesamtstunden:')
-        let table = arr.slice(14, endOfSlice);
-        console.log(table);
-        let rowArrayEntries = [];
-        for (let i = 0; i < table.length; i++) {
-            if (table[i].indexOf(':') !== -1) {
-                let sum = table[i + 2];
-                let mid = sum.indexOf(':');
-                const hours = +sum.slice(0, mid);
-                let minutes = +sum.slice(mid + 1, sum.length + 1);
-                minutes = minutes / 60;
-                sum = hours + minutes;
-                rowArrayEntries.push({day: table[i - 1], start: table[i], end: table[i + 1], sum: sum})
-
-                i = i + 2;
-            }
-        }
-
-        // -- sum up all worked hours from rowArrayEntries array for validation
-        let sumOfWorkHours = 0;
-        rowArrayEntries.map((ent) => sumOfWorkHours += +ent.sum)
-
-        // -- log results
-        console.log('____________ R E S U L T _____________');
-        console.log('PDF: ' + index);
-        console.log(sumOfWorkHours);
-        sz.gesamtstunden = +(arr[endOfSlice + 1].slice(0, arr[endOfSlice + 1].indexOf(':')))
-        let fakeValidation = sumOfWorkHours === sz.gesamtstunden;
-        console.log('Correct: ' + fakeValidation);
-        console.log('--------------------------------------')
-
-        validation(index, sumOfWorkHours);
-    }
-
-    function validation(index, sumOfWorkHours) {
-
-    }
-</script>
 </html>
