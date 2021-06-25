@@ -55,17 +55,12 @@ async function readFile() {
     for (let i = 0; i < docList.length; i++) {
         const doc = docList[i];
         let temp = doc.arrayBuffer();
-        // console.log(await temp);
 
         try {
             let worker = pdfjsLib.getDocument({data: await temp});
             worker.promise.then((pdf) => {
-                console.log('pdf');
-                // console.log(pdf);
                 let pageNumber = 1;
                 pdf.getPage(pageNumber).then(async function (page) {
-                    // console.log('Page loaded');
-                    // console.log(page);
                     let tokenizedText = await page.getTextContent();
                     await prepareValidation(i, tokenizedText.items);
                     // const pageText = tokenizedText.items.map(token => token.str).join("");
@@ -93,6 +88,7 @@ async function prepareValidation(index, itemArr) {
         fBereich: '',
         isSigned: false,
         gesamtstunden: 0,
+        isValid: true,
     }
     // -- cleanup tokenArray for further work
     let arr = itemArr.map(item => item.str.trim())
@@ -109,7 +105,7 @@ async function prepareValidation(index, itemArr) {
     // -- extract table and extract rowArrayEntries from it for validation
     let endOfTable = arr.indexOf('Gesamtstunden:')
     let table = arr.slice(14, endOfTable);
-    console.log(table);
+    console.table(table);
     let rowEntriesArray = [];
     for (let i = 0; i < table.length; i++) {
         if (table[i].indexOf(':') !== -1) {
@@ -124,42 +120,64 @@ async function prepareValidation(index, itemArr) {
             i = i + 2;
         }
     }
-
-    // -- sum up all worked hours from rowArrayEntries array for validation
-    let sumOfWorkHours = 0;
-    rowEntriesArray.map((ent) => sumOfWorkHours += +ent.sum)
+    sz.gesamtstunden = +(arr[endOfTable + 1].slice(0, arr[endOfTable + 1].indexOf(':')))
 
     // -- log results
-    console.log('____________ R E S U L T _____________');
-    console.log('PDF: ' + index);
-    console.log(sumOfWorkHours);
-    sz.gesamtstunden = +(arr[endOfTable + 1].slice(0, arr[endOfTable + 1].indexOf(':')))
-    let fakeValidation = sumOfWorkHours === sz.gesamtstunden;
-    console.log('Correct: ' + fakeValidation);
-    console.log('--------------------------------------')
-    console.log(rowEntriesArray)
+    console.log('_________________________');
+    console.log('Finished reading PDF: ' + index);
 
-    await validation(index, sumOfWorkHours, rowEntriesArray, sz);
+    await validation(index, rowEntriesArray, sz);
 }
 
-async function validation(index, sumOfWorkHours, rowEntriesArray, szObject) {
+async function validation(index, rowEntriesArray, szObject) {
     console.log('______________________');
     console.log('starting Validation of file(s)');
     console.log('______________________');
     let hLib = window.holiday;
     hLib.setState('he');
-    console.log(hLib.holidays);
 
+    // validation holidays
     for (let i = 0; i < rowEntriesArray.length; i++) {
-        if (hLib.isHoliday(new Date(2021, szObject.month, rowEntriesArray[i].day))) {
-            alert('an freien tag wird idde gschafft!')
+        if (hLib.isHoliday(new Date(2021, szObject.month, rowEntriesArray[i].day))) { // todo year
+            szObject.isValid = false;
         }
     }
 
-    console.log(hLib.isHoliday(new Date(2015, 0, 1)));
-    console.log(`pdf: ${index}, month: ${szObject.month}`)
+    // todo abgleich mit vertrgalich festgelegten stunden
+    // validation workHours = sum of worked hours
+    let sumOfWorkHours = 0;
+    rowEntriesArray.map((entry) => sumOfWorkHours += +entry.sum)
+    if (sumOfWorkHours !== szObject.gesamtstunden) {
+        szObject.isValid = false;
+    }
+
+
+    console.log('____________ R E S U L T _____________');
+    console.log(`pdf: ${index}, month: ${szObject.month}, isValid: ${szObject.isValid}`);
+
+    display(szObject);
 }
 
-function display() {
 
+function display(szObject) {
+    let table = document.getElementById('table');
+    let tBody = document.getElementById('tBody');
+    let tHead = table.createTHead();
+    if (tHead.rows.length === 0) {
+        // fill table head
+        let tHeadRow = tHead.insertRow(0);
+        for (let i = 0; i < Object.keys(szObject).length; i++) {
+            let cell = tHeadRow.insertCell();
+            cell.innerHTML = Object.keys(szObject)[i];
+        }
+    }
+
+    // create row to insert data
+    let tr = tBody.appendChild(document.createElement('TR'));
+    // insert data
+    for (let i = 0; i < Object.keys(szObject).length; i++) {
+        let td = tr.appendChild(document.createElement('TD'));
+        let content = document.createTextNode(Object.entries(szObject)[i][1].toString());
+        td.appendChild(content);
+    }
 }

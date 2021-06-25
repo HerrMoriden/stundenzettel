@@ -44,15 +44,18 @@ background-image: linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 90%);
     <hr class="my-4">
 
     <div class="input-group flex-nowrap">
-        <input type="file" id="uploadInput" onchange="readFile()" multiple class="form-control"
+        <input type="file" id="uploadInput" multiple class="form-control"
                placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
     </div>
 </div>
 
 <button class="btn btn-primary" type="button" id="startValidationButton" onclick="readFile()">Validate</button>
 
-<table id="resultTable">
+<table id="table">
+<tbody id="tBody">
 
+
+</tbody>
 </table>
 </body>
 </html>
