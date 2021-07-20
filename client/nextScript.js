@@ -41,16 +41,56 @@ const m = {
 }
 Object.freeze(m);
 
-async function readFile() {
+// set of json.stringify object of students with their target hours
+let c = new Set();
+
+async function validationEventHandle() {
+    const docList = document.getElementById('uploadInputSZ').files;
+    const contractList = document.getElementById('uploadInputList').files;
+
+    await readContractList(contractList);
+    await readSZFiles(docList);
+}
+
+async function readContractList(cList) {
+    console.log(cList[0]);
+    const reader = new FileReader();
+    try {
+        reader.onload = function (event) {
+            console.log(event.target.result); // the CSV content as string
+            createContractList(event.target.result);
+        };
+        reader.readAsText(cList[0]);
+    } catch (e) {
+        console.log(e);
+    }
+
+
+}
+
+async function createContractList(cListString) {
+    console.log(cListString);
+    let cList = cListString.split(`\r\n`);
+    const header = cList[0];
+
+    for (let i = 1; i < cList.length; i++) {
+        if (cList[i] !== '') {
+            let temp = cList[i].split(';')
+            let student = {firstName: temp[0], name: temp[1], hours: temp[2]}
+            c.add(JSON.stringify(student));
+        }
+    }
+    console.log(c);
+}
+
+async function readSZFiles(docList) {
     console.log('______________________');
     console.log('start reading file(s)');
     console.log('______________________');
 
-
     let pdfjsLib = window['pdfjs-dist/build/pdf'];
     pdfjsLib.GlobalWorkerOptions.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
 
-    const docList = document.getElementById('uploadInput').files;
 
     for (let i = 0; i < docList.length; i++) {
         const doc = docList[i];
@@ -133,24 +173,39 @@ async function validation(index, rowEntriesArray, szObject) {
     console.log('______________________');
     console.log('starting Validation of file(s)');
     console.log('______________________');
+
+
     let hLib = window.holiday;
     hLib.setState('he');
 
     // validation holidays
     for (let i = 0; i < rowEntriesArray.length; i++) {
-        if (hLib.isHoliday(new Date(2021, szObject.month, rowEntriesArray[i].day))) { // todo year
+        if (hLib.isHoliday(new Date(new Date().getFullYear(), szObject.month, rowEntriesArray[i].day))) {
             szObject.isValid = false;
+            console.error(`Einer der Einträge scheint an einem Feiertag gewesen zu sein \n Tag: ${rowEntriesArray[i].day}, ${szObject.month} | ${rowEntriesArray[i].start} - ${rowEntriesArray[i].end} - ${rowEntriesArray[i].sum}`)
         }
     }
 
-    // todo abgleich mit vertrgalich festgelegten stunden
     // validation workHours = sum of worked hours
     let sumOfWorkHours = 0;
     rowEntriesArray.map((entry) => sumOfWorkHours += +entry.sum)
     if (sumOfWorkHours !== szObject.gesamtstunden) {
         szObject.isValid = false;
+        console.error(`Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein`)
     }
 
+    // comparison with contracted target hours
+    c.forEach((cont) => {
+        let cObject = JSON.parse(cont);
+        if (szObject.lName === cObject.name) {
+            console.log('got hit');
+            if (szObject.gesamtstunden.toString() !== cObject.hours.toString()) {
+                szObject.isValid = false;
+                console.error(`Die Anzahl der Gesamtstunden stimmt nicht mit den vertraglich vereinbarten Stunden überein \n Gesamtstunden: ${szObject.gesamtstunden}, Sollstunden: ${cObject.hours}`)
+
+            }
+        }
+    });
 
     console.log('____________ R E S U L T _____________');
     console.log(`pdf: ${index}, month: ${szObject.month}, isValid: ${szObject.isValid}`);
