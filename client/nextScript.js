@@ -53,11 +53,9 @@ async function validationEventHandle() {
 }
 
 async function readContractList(cList) {
-    console.log(cList[0]);
     const reader = new FileReader();
     try {
         reader.onload = function (event) {
-            console.log(event.target.result); // the CSV content as string
             createContractList(event.target.result);
         };
         reader.readAsText(cList[0]);
@@ -69,7 +67,6 @@ async function readContractList(cList) {
 }
 
 async function createContractList(cListString) {
-    console.log(cListString);
     let cList = cListString.split(`\r\n`);
     const header = cList[0];
 
@@ -80,7 +77,6 @@ async function createContractList(cListString) {
             c.add(JSON.stringify(student));
         }
     }
-    console.log(c);
 }
 
 async function readSZFiles(docList) {
@@ -117,7 +113,6 @@ async function readSZFiles(docList) {
 async function prepareValidation(index, itemArr) {
     console.log('______________________');
     console.log('preparing Validation of file(s)');
-    console.log('______________________');
 
     // -- stundenzettel object
     let sz = {
@@ -145,7 +140,6 @@ async function prepareValidation(index, itemArr) {
     // -- extract table and extract rowArrayEntries from it for validation
     let endOfTable = arr.indexOf('Gesamtstunden:')
     let table = arr.slice(14, endOfTable);
-    console.table(table);
     let rowEntriesArray = [];
     for (let i = 0; i < table.length; i++) {
         if (table[i].indexOf(':') !== -1) {
@@ -162,17 +156,12 @@ async function prepareValidation(index, itemArr) {
     }
     sz.gesamtstunden = +(arr[endOfTable + 1].slice(0, arr[endOfTable + 1].indexOf(':')))
 
-    // -- log results
-    console.log('_________________________');
-    console.log('Finished reading PDF: ' + index);
-
     await validation(index, rowEntriesArray, sz);
 }
 
 async function validation(index, rowEntriesArray, szObject) {
     console.log('______________________');
     console.log('starting Validation of file(s)');
-    console.log('______________________');
 
 
     let hLib = window.holiday;
@@ -198,7 +187,6 @@ async function validation(index, rowEntriesArray, szObject) {
     c.forEach((cont) => {
         let cObject = JSON.parse(cont);
         if (szObject.lName === cObject.name) {
-            console.log('got hit');
             if (szObject.gesamtstunden.toString() !== cObject.hours.toString()) {
                 szObject.isValid = false;
                 console.error(`Die Anzahl der Gesamtstunden stimmt nicht mit den vertraglich vereinbarten Stunden überein \n Gesamtstunden: ${szObject.gesamtstunden}, Sollstunden: ${cObject.hours}`)
