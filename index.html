@@ -24,12 +24,16 @@
             crossorigin="anonymous"></script>
     <script type="application/javascript" src="nextScript.js"></script>
     <link rel="stylesheet" href="style.css">
+    <script src="distraction.js"></script>
 </head>
 
 
 <body>
-<div id="bodyDiv">
+<canvas id="canvas-club"></canvas>
+<div class="bg-circle left-corner"></div>
+<div class="bg-circle right-corner"></div>
 
+<div id="bodyDiv">
 <div class="jumbotron">
     <div>
         <h1 class="display-4">U N D E R C O N S T R U C T I O N</h1>
@@ -53,7 +57,7 @@
 
 <div class="flex-nowrap justify-content-center" style="padding: 2rem">
     <div>
-        <button class="btn btn-primary" type="button" id="startValidationButton" onclick="validationEventHandle()">Validate</button>
+        <button class="btn btn-primary disabled" type="button" id="startValidationButton" onclick="validationEventHandle()">Validate</button>
     </div>
 </div>
 

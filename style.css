@@ -1,4 +1,4 @@
-tr>td {
+tr > td {
     padding: 1rem;
 }
 
@@ -12,4 +12,64 @@ div#bodyDiv {
 body {
     background-color: #8EC5FC;
     background-image: linear-gradient(90deg, #8EC5FC 0%, #E0C3FC 90%);
+    overflow: hidden;
+    color: rgb(255, 131, 0);
+}
+
+th {
+    border: 1px solid black;
+}
+
+.bg-circle {
+
+    background-blend-mode: multiply;
+    height: 135vh;
+    width: 135vh;
+    position: absolute;
+    z-index: -4;
+}
+
+.right-corner {
+    background: linear-gradient(
+            90deg, #979fa6, #196bbe, #8a171700);
+    clip-path: circle(35% at 70rem);
+}
+
+.left-corner {
+    background: linear-gradient(
+            270deg, #979fa6, #196bbe, #8a171700);
+    clip-path: circle(25% at 0 75%);
+}
+
+canvas {
+    position: absolute;
+    z-index: -5;
+}
+
+.blob {
+    /*border-radius: 50%;*/
+    /*margin: 10px;*/
+    /*height: 20px;*/
+    /*width: 20px;*/
+
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+    transform: scale(1);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
 }
