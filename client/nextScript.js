@@ -44,6 +44,33 @@ Object.freeze(m);
 // set of json.stringify object of students with their target hours
 let c = new Set();
 
+let valFlag1 = false;
+let valFlag2 = false;
+
+document.addEventListener('DOMContentLoaded', () => {
+
+    document.getElementById('uploadInputSZ').addEventListener('change',() => {
+        if (document.getElementById('uploadInputSZ').files[0] !== undefined) {
+            valFlag1 = true;
+            enableValidation()
+        }
+    })
+    document.getElementById('uploadInputList').addEventListener('change', () => {
+        if (document.getElementById('uploadInputList').files[0] !== undefined) {
+            valFlag2 = true;
+            enableValidation()
+        }
+    })
+
+    function enableValidation() {
+        if (valFlag1 && valFlag2) {
+            console.log(document.getElementById('startValidationButton').classList);
+            document.getElementById('startValidationButton').classList.remove('disabled')
+            document.getElementById('startValidationButton').classList.toggle('blob')
+        }
+    }
+})
+
 async function validationEventHandle() {
     const docList = document.getElementById('uploadInputSZ').files;
     const contractList = document.getElementById('uploadInputList').files;

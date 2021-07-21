@@ -16,6 +16,10 @@ body {
     color: rgb(255, 131, 0);
 }
 
+th {
+    border: 1px solid black;
+}
+
 .bg-circle {
 
     background-blend-mode: multiply;
