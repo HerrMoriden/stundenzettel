@@ -201,7 +201,6 @@ async function validation(index, rowEntriesArray, szObject) {
     display(szObject);
 }
 
-
 function display(szObject) {
     let table = document.getElementById('table');
     let tBody = document.getElementById('tBody');
