@@ -49,7 +49,7 @@ let valFlag2 = false;
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    document.getElementById('uploadInputSZ').addEventListener('change',() => {
+    document.getElementById('uploadInputSZ').addEventListener('change', () => {
         if (document.getElementById('uploadInputSZ').files[0] !== undefined) {
             valFlag1 = true;
             enableValidation()
@@ -69,6 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('startValidationButton').classList.toggle('blob')
         }
     }
+
 })
 
 async function validationEventHandle() {
@@ -99,7 +100,7 @@ async function createContractList(cListString) {
 
     for (let i = 1; i < cList.length; i++) {
         if (cList[i] !== '') {
-            let temp = cList[i].split(';')
+            let temp = cList[i].split(',')
             let student = {firstName: temp[0], name: temp[1], hours: temp[2]}
             c.add(JSON.stringify(student));
         }
@@ -184,48 +185,85 @@ async function prepareValidation(index, itemArr) {
     sz.gesamtstunden = +(arr[endOfTable + 1].slice(0, arr[endOfTable + 1].indexOf(':')))
 
     await validation(index, rowEntriesArray, sz);
+    await display(sz);
 }
 
 async function validation(index, rowEntriesArray, szObject) {
     console.log('______________________');
     console.log('starting Validation of file(s)');
+    try {
+        let hLib = window.holiday;
+        hLib.setState('he');
 
-
-    let hLib = window.holiday;
-    hLib.setState('he');
-
-    // validation holidays
-    for (let i = 0; i < rowEntriesArray.length; i++) {
-        if (hLib.isHoliday(new Date(new Date().getFullYear(), szObject.month, rowEntriesArray[i].day))) {
-            szObject.isValid = false;
-            console.error(`Einer der Einträge scheint an einem Feiertag gewesen zu sein \n Tag: ${rowEntriesArray[i].day}, ${szObject.month} | ${rowEntriesArray[i].start} - ${rowEntriesArray[i].end} - ${rowEntriesArray[i].sum}`)
+        // validate last name
+        try {
+            c.forEach((tutor) => {
+                tutor = JSON.parse(tutor)
+                console.log(tutor);
+                if (tutor.name.toLowerCase() === szObject.lName.toLowerCase()) {
+                    szObject.isValid = true;
+                } else {
+                    console.error(`Es konnte kein Eintrag zu Herr/Frau ${szObject.lName} in der Vertragsliste gefunden werden`);
+                    szObject.isValid = false;
+                    throw new Error('ValidationFail')
+                }
+            });
+        } catch (ex) {
+            return  ex
         }
-    }
 
-    // validation workHours = sum of worked hours
-    let sumOfWorkHours = 0;
-    rowEntriesArray.map((entry) => sumOfWorkHours += +entry.sum)
-    if (sumOfWorkHours !== szObject.gesamtstunden) {
-        szObject.isValid = false;
-        console.error(`Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein`)
-    }
 
-    // comparison with contracted target hours
-    c.forEach((cont) => {
-        let cObject = JSON.parse(cont);
-        if (szObject.lName === cObject.name) {
-            if (szObject.gesamtstunden.toString() !== cObject.hours.toString()) {
-                szObject.isValid = false;
-                console.error(`Die Anzahl der Gesamtstunden stimmt nicht mit den vertraglich vereinbarten Stunden überein \n Gesamtstunden: ${szObject.gesamtstunden}, Sollstunden: ${cObject.hours}`)
-
+        // validation holidays
+        try {
+            for (let i = 0; i < rowEntriesArray.length; i++) {
+                if (hLib.isHoliday(new Date(new Date().getFullYear(), szObject.month, rowEntriesArray[i].day))) {
+                    szObject.isValid = false;
+                    console.error(`Einer der Einträge scheint an einem Feiertag gewesen zu sein \n Tag: ${rowEntriesArray[i].day}, ${szObject.month} | ${rowEntriesArray[i].start} - ${rowEntriesArray[i].end} - ${rowEntriesArray[i].sum}`)
+                    throw new Error('ValidationFail')
+                }
             }
+        } catch (ex) {
+            return ex
         }
-    });
 
-    console.log('____________ R E S U L T _____________');
-    console.log(`pdf: ${index}, month: ${szObject.month}, isValid: ${szObject.isValid}`);
+        // validation workHours = sum of worked hours
+        try {
+            let sumOfWorkHours = 0;
+            rowEntriesArray.map((entry) => sumOfWorkHours += +entry.sum)
+            if (sumOfWorkHours !== szObject.gesamtstunden) {
+                szObject.isValid = false;
+                console.error(`Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein`)
+                throw new Error('ValidationFail')
+            }
+        } catch (ex) {
+            return ex
+        }
 
-    display(szObject);
+
+        // comparison with contracted target hours
+        try {
+            c.forEach((cont) => {
+                let cObject = JSON.parse(cont);
+                if (szObject.lName === cObject.name) {
+                    if (szObject.gesamtstunden.toString() !== cObject.hours.toString()) {
+                        szObject.isValid = false;
+                        console.error(`Die Anzahl der Gesamtstunden stimmt nicht mit den vertraglich vereinbarten Stunden überein \n Gesamtstunden: ${szObject.gesamtstunden}, Sollstunden: ${cObject.hours}`)
+                        throw new Error('ValidationFail')
+                    }
+                }
+            });
+        } catch (ex) {
+            return ex
+        }
+
+
+        console.log('____________ R E S U L T _____________');
+        console.log(`pdf: ${index}, month: ${szObject.month}, isValid: ${szObject.isValid}`);
+    } catch (e) {
+        console.error(e)
+    }
+
+
 }
 
 function display(szObject) {

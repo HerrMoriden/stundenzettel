@@ -28,47 +28,49 @@
 </head>
 
 
-<body>
-<canvas id="canvas-club"></canvas>
+<body id="body">
+<!--<canvas id="canvas-club"></canvas>-->
 <div class="bg-circle left-corner"></div>
 <div class="bg-circle right-corner"></div>
 
 <div id="bodyDiv">
-<div class="jumbotron">
-    <div>
-        <h1 class="display-4">U N D E R C O N S T R U C T I O N</h1>
+    <div class="jumbotron">
+        <div>
+            <h1 class="display-4">U N D E R C O N S T R U C T I O N</h1>
+        </div>
+        <p class="lead">Stundenzettel-Validator</p>
+        <hr class="my-4">
     </div>
-    <p class="lead">Stundenzettel-Validator</p>
-    <hr class="my-4">
-</div>
 
-<div class="input-group flex-nowrap justify-content-center">
-    <div>
-        <label for="uploadInputSZ">StundenZettel als multy file upload</label>
-        <input type="file" id="uploadInputSZ" multiple class="form-control"
-               placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
+    <div class="input-group flex-nowrap justify-content-center">
+        <div>
+            <label for="uploadInputSZ">StundenZettel als multy file upload</label>
+            <input type="file" id="uploadInputSZ" multiple class="form-control"
+                   placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
+        </div>
+        <div>
+            <label for="uploadInputList">Liste der Tutor:innen und ihrer Stunden</label>
+            <input type="file" id="uploadInputList" multiple class="form-control"
+                   placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
+        </div>
     </div>
-    <div>
-        <label for="uploadInputList">Liste der Tutor:innen und ihrer Stunden</label>
-        <input type="file" id="uploadInputList" multiple class="form-control"
-               placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
+
+    <div class="flex-nowrap justify-content-center" style="padding: 2rem">
+        <div>
+            <button class="btn btn-primary disabled" type="button" id="startValidationButton"
+                    onclick="validationEventHandle()">Validate
+            </button>
+        </div>
     </div>
-</div>
 
-<div class="flex-nowrap justify-content-center" style="padding: 2rem">
-    <div>
-        <button class="btn btn-primary disabled" type="button" id="startValidationButton" onclick="validationEventHandle()">Validate</button>
+    <div class="flex-nowrap">
+        <table id="table">
+            <tbody id="tBody">
+
+
+            </tbody>
+        </table>
     </div>
-</div>
-
-<div class="flex-nowrap">
-    <table id="table">
-        <tbody id="tBody">
-
-
-        </tbody>
-    </table>
-</div>
 
 </div>
 </body>
