@@ -22,14 +22,14 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-    <script type="application/javascript" src="nextScript.js"></script>
+    <script type="application/javascript" src="script.js"></script>
     <link rel="stylesheet" href="style.css">
-    <script src="distraction.js"></script>
+    <!-- <script src="distraction.js"></script> -->
 </head>
 
 
 <body>
-<canvas id="canvas-club"></canvas>
+<!-- <canvas id="canvas-club"></canvas> -->
 <div class="bg-circle left-corner"></div>
 <div class="bg-circle right-corner"></div>
 
@@ -44,8 +44,8 @@
 
 <div class="input-group flex-nowrap justify-content-center">
     <div>
-        <label for="uploadInputSZ">StundenZettel als multy file upload</label>
-        <input type="file" id="uploadInputSZ" multiple class="form-control"
+        <label for="uploadInputSZ">StundenZettel als multi file upload</label>
+        <input type="file" id="uploadInputSZ" webkitdirectory directory multiple class="form-control"
                placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
     </div>
     <div>
@@ -57,7 +57,7 @@
 
 <div class="flex-nowrap justify-content-center" style="padding: 2rem">
     <div>
-        <button class="btn btn-primary disabled" type="button" id="startValidationButton" onclick="validationEventHandle()">Validate</button>
+        <button class="btn btn-primary disabled" type="button" id="startValidationButton">Validate</button>
     </div>
 </div>
 
