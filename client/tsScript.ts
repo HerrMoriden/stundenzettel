@@ -18,27 +18,26 @@ class Student {
   hours: number;
 
   constructor(fname, name, hr) {
-    this.firstName = fname;
-    this.name = name;
+    this.firstName = fname.trim().toLowerCase();
+    this.name = name.trim().toLowerCase();
     this.hours = hr;
   }
 }
 
 class ContractList {
-  private contracts: Student[] = [];
+  contracts: Student[] = [];
 
   addStudent(std: Student): void {
     this.contracts.push(std);
   }
 
+  // todo
   getStdByName(name: string): Student {
-    let res;
-    this.contracts.filter((std: Student) => {
-      if (name === std.name) {
-        res = std;
+    for (let c of this.contracts) {
+      if (name == c.name) {
+        return c;
       }
-    });
-    return res;
+    }
   }
 }
 
@@ -54,7 +53,15 @@ class StundenZettel {
   isSigned: boolean;
   isValid: boolean;
 
-  constructor(bDate: string, month: string, fBereich: string) {
+  constructor(
+    fn: string,
+    ln: string,
+    bDate: string,
+    month: string,
+    fBereich: string,
+  ) {
+    this.fName = fn.trim().toLowerCase();
+    this.name = ln.trim().toLowerCase();
     this.bDate = bDate;
     this.fBereich = fBereich;
     this.month = month;
@@ -65,8 +72,8 @@ class StundenZettel {
   }
 
   setStudent(std: Student) {
-    this.fName = std.firstName;
-    this.name = std.name;
+    this.fName = std.firstName.trim().toLowerCase();
+    this.name = std.name.trim().toLowerCase();
     this.hours = std.hours;
   }
 
@@ -74,8 +81,6 @@ class StundenZettel {
     this.rowEntries.push(row);
   }
 }
-
-function parseTextToClass() {}
 
 function handleContractListInput(list: File) {
   const reader = new FileReader();
@@ -85,7 +90,13 @@ function handleContractListInput(list: File) {
       for (let i = 1; i < c.length; i++) {
         if (c[i] != '') {
           let [firstName, name, hours] = c[i].split(';');
-          contracts.addStudent(new Student(firstName, name, hours));
+          contractList.addStudent(
+            new Student(
+              firstName.trim().toLowerCase(),
+              name.trim().toLowerCase(),
+              hours.trim().toLowerCase(),
+            ),
+          );
         }
       }
     };
@@ -123,9 +134,7 @@ async function readSZFiles(list: File[]) {
       console.error(e);
     }
   }
-  let temp = await Promise.all(pageTextPromises);
-  console.log(temp);
-  return temp;
+  return await Promise.all(pageTextPromises);
 }
 
 async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
@@ -133,9 +142,11 @@ async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
     if (tokenList.length > 0) {
       let header = tokenList.slice(0, 10);
       let sz: StundenZettel = new StundenZettel(
-        header[9],
-        header[3],
-        header[7],
+        header[5], // firstName
+        header[1], // lastName
+        header[9], // bDate
+        header[3], // month
+        header[7], // fBereich
       );
       let endOfTable = tokenList.indexOf('Gesamtstunden:');
       let table = tokenList.slice(14, endOfTable);
@@ -147,12 +158,7 @@ async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
           const hours: number = +rowSum?.slice(0, mid);
           let minutes: number = +rowSum?.slice(mid + 1, rowSum.length + 1);
           minutes = minutes / 60;
-          // rowEntriesArray.push({
-          //   day: table[i - 1],
-          //   start: table[i],
-          //   end: table[i + 1],
-          //   sum: hours + minutes,
-          // });
+
           sz.setRowEntries({
             day: +table[i - 1],
             start: table[i],
@@ -167,12 +173,15 @@ async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
             tokenList[endOfTable + 1].indexOf(':'),
           )
         : -2;
-// todo das klappt noch net
-      let stdFromContract: Student | undefined = contracts.getStdByName(
-        header[1],
-      );
-      if (stdFromContract) {
-        sz.setStudent(stdFromContract);
+
+      if (contractsUploaded) {
+        // todo das klappt noch net
+        let stdFromContract: Student | undefined = contractList.getStdByName(
+          sz.name,
+        );
+        if (stdFromContract) {
+          sz.setStudent(stdFromContract);
+        }
       }
       return sz;
     }
@@ -181,6 +190,7 @@ async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
 
 async function handleSZListInput(list: File[]) {
   let tokenizedTextList: string[] = await readSZFiles(list);
+  console.log(tokenizedTextList);
   //   let szList: StundenZettel[] =
   stundenzettelList = await parseTokenizedText(tokenizedTextList).then(
     (parsedList) =>
@@ -188,7 +198,8 @@ async function handleSZListInput(list: File[]) {
         a?.name?.localeCompare(b?.name),
       ),
   );
-
+  szListUploaded = true;
+  console.log(stundenzettelList);
   //   stundenzettelList = szList;
 }
 
@@ -234,8 +245,11 @@ type RowEntry = {
     G L O B A L S
 ############################# */
 
-let contracts: ContractList = new ContractList();
+let contractList: ContractList = new ContractList();
 let stundenzettelList: StundenZettel[] = [];
+
+let contractsUploaded = false;
+let szListUploaded = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   const szInput: HTMLInputElement = document.getElementById(
@@ -251,8 +265,11 @@ document.addEventListener('DOMContentLoaded', () => {
       enableValidation();
       let temp =
         szInput.files.length < 1 ? [].concat(szInput.files)[0] : szInput.files;
-      await handleSZListInput(temp)
-      .then(() => console.log(stundenzettelList));
+      await handleSZListInput(temp).then(() => {
+        /* todo validation */
+        console.log(stundenzettelList);
+        szListUploaded = true;
+      });
     }
   });
 
@@ -260,6 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contractsInput.files[0] !== undefined) {
       enableValidation();
       await handleContractListInput(contractsInput.files[0]);
+      contractsUploaded = true;
     }
   });
 
@@ -269,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function enableValidation() {
-    if (szInput.files.length > 0 && contractsInput.files.length > 0) {
+    if (szListUploaded && contractsUploaded) {
       validateBtn.classList.remove('disabled');
       validateBtn.classList.toggle('blob');
     }
