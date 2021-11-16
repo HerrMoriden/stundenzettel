@@ -1,3 +1,41 @@
+/* ##########################
+    T Y P E S
+############################# */
+
+// pdfjs stuff
+
+declare module 'pdfjs-dist';
+
+type TokenText = {
+  str: string;
+};
+
+type PageText = {
+  items: TokenText[];
+};
+
+type PdfPage = {
+  getTextContent: () => Promise<PageText>;
+};
+
+type Pdf = {
+  numPages: number;
+  getPage: (pageNo: number) => Promise<PdfPage>;
+};
+
+type PDFSource = Buffer | string;
+
+declare module 'pdfjs-dist/build/pdf.worker.js'; // needed in 2.3.0
+
+// other types
+
+type RowEntry = {
+  day: number;
+  start: string;
+  end: string;
+  sum: number;
+};
+
 enum months {
   'January',
   'Februar',
@@ -81,6 +119,18 @@ class StundenZettel {
     this.rowEntries.push(row);
   }
 }
+
+/* ##########################
+    G L O B A L S
+############################# */
+
+let contractList: ContractList = new ContractList();
+let stundenzettelList: StundenZettel[] = [];
+
+let contractsUploaded = false;
+let szListUploaded = false;
+
+// #######################################
 
 function handleContractListInput(list: File) {
   const reader = new FileReader();
@@ -190,8 +240,8 @@ async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
 
 async function handleSZListInput(list: File[]) {
   let tokenizedTextList: string[] = await readSZFiles(list);
-  console.log(tokenizedTextList);
-  //   let szList: StundenZettel[] =
+  //   console.log(tokenizedTextList);
+
   stundenzettelList = await parseTokenizedText(tokenizedTextList).then(
     (parsedList) =>
       parsedList.sort((a: StundenZettel, b: StundenZettel) =>
@@ -199,57 +249,15 @@ async function handleSZListInput(list: File[]) {
       ),
   );
   szListUploaded = true;
-  console.log(stundenzettelList);
-  //   stundenzettelList = szList;
 }
 
-/* ##########################
-    T Y P E S
-############################# */
+async function validation() {
+    
+}
 
-// pdfjs stuff
-
-declare module 'pdfjs-dist';
-
-type TokenText = {
-  str: string;
-};
-
-type PageText = {
-  items: TokenText[];
-};
-
-type PdfPage = {
-  getTextContent: () => Promise<PageText>;
-};
-
-type Pdf = {
-  numPages: number;
-  getPage: (pageNo: number) => Promise<PdfPage>;
-};
-
-type PDFSource = Buffer | string;
-
-declare module 'pdfjs-dist/build/pdf.worker.js'; // needed in 2.3.0
-
-// other types
-
-type RowEntry = {
-  day: number;
-  start: string;
-  end: string;
-  sum: number;
-};
-
-/* ##########################
-    G L O B A L S
-############################# */
-
-let contractList: ContractList = new ContractList();
-let stundenzettelList: StundenZettel[] = [];
-
-let contractsUploaded = false;
-let szListUploaded = false;
+function renderResultTable() {
+    // todo
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const szInput: HTMLInputElement = document.getElementById(
@@ -262,28 +270,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   szInput.addEventListener('change', async () => {
     if (szInput.files[0] !== undefined) {
-      enableValidation();
       let temp =
         szInput.files.length < 1 ? [].concat(szInput.files)[0] : szInput.files;
+
       await handleSZListInput(temp).then(() => {
-        /* todo validation */
         console.log(stundenzettelList);
         szListUploaded = true;
+        enableValidation();
       });
     }
   });
 
   contractsInput.addEventListener('change', async () => {
     if (contractsInput.files[0] !== undefined) {
-      enableValidation();
       await handleContractListInput(contractsInput.files[0]);
       contractsUploaded = true;
+      szInput.disabled = false;
+      enableValidation();
     }
   });
 
   validateBtn.addEventListener('click', async () => {
-    const docList = szInput.files;
-    await handleSZListInput([].concat(docList));
+    await validation().then(() => {
+        renderResultTable();
+    })
   });
 
   function enableValidation() {
