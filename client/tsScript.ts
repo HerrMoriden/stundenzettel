@@ -29,6 +29,13 @@ declare module 'pdfjs-dist/build/pdf.worker.js'; // needed in 2.3.0
 
 // other types
 
+type HolidayLibrary = {
+  resetHoliday: () => void;
+  setState: (bundesland: string) => void;
+  isHoliday: (Date: Date) => boolean;
+  isWorkday: (Date: Date) => boolean;
+};
+
 type RowEntry = {
   day: number;
   start: string;
@@ -62,14 +69,13 @@ class Student {
   }
 }
 
-class ContractList {
+class ContractsList {
   contracts: Student[] = [];
 
   addStudent(std: Student): void {
     this.contracts.push(std);
   }
 
-  // todo
   getStdByName(name: string): Student {
     for (let c of this.contracts) {
       if (name == c.name) {
@@ -90,6 +96,7 @@ class StundenZettel {
   gesamtstunden: number;
   isSigned: boolean;
   isValid: boolean;
+  issues?: string[];
 
   constructor(
     fn: string,
@@ -106,10 +113,10 @@ class StundenZettel {
     this.rowEntries = [];
     this.gesamtstunden = -1;
     this.isSigned = false;
-    this.isValid = false;
+    this.isValid = true;
   }
 
-  setStudent(std: Student) {
+  setStudentData(std: Student) {
     this.fName = std.firstName.trim().toLowerCase();
     this.name = std.name.trim().toLowerCase();
     this.hours = std.hours;
@@ -118,17 +125,24 @@ class StundenZettel {
   setRowEntries(row: RowEntry) {
     this.rowEntries.push(row);
   }
+
+  addIssue(issue: string) {
+    if (!this.issues || this.issues.length < 1) {
+      this.issues = [];
+    }
+    this.issues.push(issue);
+    this.isValid = false;
+  }
 }
 
 /* ##########################
     G L O B A L S
 ############################# */
 
-let contractList: ContractList = new ContractList();
-let stundenzettelList: StundenZettel[] = [];
+let ContractList: ContractsList = new ContractsList();
+let StundenzettelList: StundenZettel[] = [];
 
-let contractsUploaded = false;
-let szListUploaded = false;
+let holidayLibrary: HolidayLibrary;
 
 // #######################################
 
@@ -140,7 +154,7 @@ function handleContractListInput(list: File) {
       for (let i = 1; i < c.length; i++) {
         if (c[i] != '') {
           let [firstName, name, hours] = c[i].split(';');
-          contractList.addStudent(
+          ContractList.addStudent(
             new Student(
               firstName.trim().toLowerCase(),
               name.trim().toLowerCase(),
@@ -156,7 +170,7 @@ function handleContractListInput(list: File) {
   }
 }
 
-const getPageText = async (pdf: Pdf, pageNo: number) => {
+const getPageText = async (pdf: Pdf, pageNo: number): Promise<string[]> => {
   const page = await pdf.getPage(pageNo);
   const tokenizedText = await page.getTextContent();
   let pageText = tokenizedText.items.map((token) => token.str.trim());
@@ -169,7 +183,7 @@ async function readSZFiles(list: File[]) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     '//mozilla.github.io/pdf.js/build/pdf.worker.js';
 
-  const pageTextPromises = [];
+  const pageTextPromises: Promise<string[]>[] = [];
 
   for (let sz of list) {
     let data: ArrayBuffer = await sz.arrayBuffer();
@@ -187,7 +201,7 @@ async function readSZFiles(list: File[]) {
   return await Promise.all(pageTextPromises);
 }
 
-async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
+async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
   return list.map((tokenList) => {
     if (tokenList.length > 0) {
       let header = tokenList.slice(0, 10);
@@ -224,13 +238,13 @@ async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
           )
         : -2;
 
-      if (contractsUploaded) {
+      if (ContractList.contracts.length > 0) {
         // todo das klappt noch net
-        let stdFromContract: Student | undefined = contractList.getStdByName(
+        let stdFromContract: Student | undefined = ContractList.getStdByName(
           sz.name,
         );
         if (stdFromContract) {
-          sz.setStudent(stdFromContract);
+          sz.setStudentData(stdFromContract);
         }
       }
       return sz;
@@ -239,24 +253,115 @@ async function parseTokenizedText(list: string[]): Promise<StundenZettel[]> {
 }
 
 async function handleSZListInput(list: File[]) {
-  let tokenizedTextList: string[] = await readSZFiles(list);
+  let tokenizedTextList: string[][] = await readSZFiles(list);
   //   console.log(tokenizedTextList);
 
-  stundenzettelList = await parseTokenizedText(tokenizedTextList).then(
+  StundenzettelList = await parseTokenizedText(tokenizedTextList).then(
     (parsedList) =>
       parsedList.sort((a: StundenZettel, b: StundenZettel) =>
         a?.name?.localeCompare(b?.name),
       ),
   );
-  szListUploaded = true;
 }
 
-async function validation() {
-    
+async function handleValidation() {
+  let validationPromises: Promise<void>[] = [];
+
+  try {
+    for (const sz of StundenzettelList) {
+      validationPromises.push(validate(sz));
+    }
+  } catch (err) {
+    // todo
+  }
+  return await Promise.all(validationPromises);
+}
+
+async function validate(sz: StundenZettel) {
+  try {
+    // check for workday == holiday
+    for (const entry of sz.rowEntries) {
+      let workedDay = new Date(new Date().getFullYear(), +sz.month, entry.day);
+      if (holidayLibrary.isHoliday(workedDay)) {
+        sz.addIssue(
+          `Einer der Einträge scheint an einem Feiertag gewesen zu sein. \n
+           Tag: ${entry.day}, ${sz.month} | ${entry.start} - ${entry.end} - ${entry.sum}`,
+        );
+      }
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    // validation workHours = sum of worked hours
+    let sumOfWorkHours = 0;
+    sz.rowEntries.map((entry) => (sumOfWorkHours += +entry.sum));
+    if (sumOfWorkHours !== sz.gesamtstunden) {
+      sz.addIssue(
+        `Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein.`,
+      );
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
+    // comparison workHours and contracted hours
+    if (sz.hours != sz.gesamtstunden) {
+      let issueMsg: string =
+        'Diesen Monat hat die Person zu ' +
+        (sz.hours > sz.gesamtstunden ? 'viel' : 'wenig') +
+        ' gearbeitet.';
+      sz.addIssue(issueMsg);
+    }
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 function renderResultTable() {
-    // todo
+  let table: HTMLTableElement = document.getElementById(
+    'table',
+  ) as HTMLTableElement;
+  let tBody = document.getElementById('tBody');
+  const tHead = table.createTHead();
+  const tableHeadColNames = ['Fist Name', 'Name', 'Month', 'Valid'];
+
+  // todo sz object keys are a little more now than needed
+  for (const sz of StundenzettelList) {
+    try {
+      if (tHead.rows.length === 0) {
+        // fill table head
+        let tHeadRow = tHead.insertRow(0);
+        for (let i = 0; i < tableHeadColNames.length; i++) {
+          let cell = tHeadRow.insertCell();
+          cell.innerHTML = tableHeadColNames[i];
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    try {
+      let fName = sz.fName;
+      let name = sz.name;
+      let month = sz.month;
+      let isValid = sz.isValid;
+      let rowData = [fName, name, month, isValid];
+
+      // create row to insert data
+      let tr = tBody.appendChild(document.createElement('TR'));
+      // insert data
+      for (let i = 0; i < rowData.length; i++) {
+        let td = tr.appendChild(document.createElement('TD'));
+        let content = document.createTextNode(rowData[i].toString());
+        td.appendChild(content);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -268,14 +373,16 @@ document.addEventListener('DOMContentLoaded', () => {
   ) as HTMLInputElement;
   const validateBtn = document.getElementById('startValidationButton');
 
+  holidayLibrary = globalThis.holiday;
+  holidayLibrary.setState('he');
+
   szInput.addEventListener('change', async () => {
     if (szInput.files[0] !== undefined) {
       let temp =
         szInput.files.length < 1 ? [].concat(szInput.files)[0] : szInput.files;
 
       await handleSZListInput(temp).then(() => {
-        console.log(stundenzettelList);
-        szListUploaded = true;
+        console.log(StundenzettelList);
         enableValidation();
       });
     }
@@ -284,22 +391,32 @@ document.addEventListener('DOMContentLoaded', () => {
   contractsInput.addEventListener('change', async () => {
     if (contractsInput.files[0] !== undefined) {
       await handleContractListInput(contractsInput.files[0]);
-      contractsUploaded = true;
       szInput.disabled = false;
       enableValidation();
     }
   });
 
   validateBtn.addEventListener('click', async () => {
-    await validation().then(() => {
-        renderResultTable();
-    })
+    await handleValidation().then(() => {
+      renderResultTable();
+    });
   });
 
   function enableValidation() {
+    let contractsUploaded = ContractList.contracts.length > 0;
+    let szListUploaded = StundenzettelList.length > 0;
+
     if (szListUploaded && contractsUploaded) {
       validateBtn.classList.remove('disabled');
       validateBtn.classList.toggle('blob');
     }
   }
 });
+
+// todo
+/*
+  aktuell werden die sollstunden in stundenzettel.hours gespeichert
+  -> in zukunft diese im Student speichern und dem Student einen Stundenzettel[]
+  => validierung und rendern pro Student mölich
+  => logischerer und angenehmerer aufbau
+*/
