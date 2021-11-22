@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>SZ-Validator</title>
     <!--    <script src="main.js"></script>-->
     <!--    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/build/pdf.min.js"></script>-->
@@ -11,65 +11,98 @@
     <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/holiday-de@1.1.3/holiday-de.js"></script>
     <!--    <script src="https://cdn.jsdelivr.net/npm/german-holiday@1.2.0/german-holiday.js"></script>-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-            crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
-            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-            crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
-            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-            crossorigin="anonymous"></script>
-    <script type="application/javascript" src="nextScript.js"></script>
-    <link rel="stylesheet" href="style.css">
-    <script src="distraction.js"></script>
-</head>
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"
+    ></script>
+    <!-- <script type="application/javascript" src="script.js"></script> -->
+    <link rel="stylesheet" href="style.css" />
+    <script type="application/javascript" src="tsScript.js"></script>
+    <!-- <script src="distraction.js"></script> -->
+  </head>
 
+  <body>
+    <!-- <canvas id="canvas-club"></canvas> -->
+    <div class="bg-circle left-corner"></div>
+    <div class="bg-circle right-corner"></div>
 
-<body>
-<canvas id="canvas-club"></canvas>
-<div class="bg-circle left-corner"></div>
-<div class="bg-circle right-corner"></div>
+    <div id="bodyDiv">
+      <div class="jumbotron">
+        <div>
+          <h1 class="display-4">
+            U N D E R &nbsp; &nbsp; C O N S T R U C T I O N
+          </h1>
+        </div>
+        <p class="lead">Stundenzettel-Validator</p>
+        <hr class="my-4" />
+      </div>
 
-<div id="bodyDiv">
-<div class="jumbotron">
-    <div>
-        <h1 class="display-4">U N D E R C O N S T R U C T I O N</h1>
+      <div class="input-group flex-nowrap justify-content-center">
+        <div>
+          <label for="uploadInputList"
+            >Liste der Tutor:innen und ihrer Stunden</label
+          >
+          <input
+            type="file"
+            id="uploadInputList"
+            multiple
+            class="form-control"
+            placeholder="upload Files"
+            aria-label="FilesUpload"
+            aria-describedby="addon-wrapping"
+          />
+        </div>
+        <div>
+          <label for="uploadInputSZ">StundenZettel als multi file upload</label>
+          <input
+            type="file"
+            id="uploadInputSZ"
+            webkitdirectory
+            directory
+            multiple
+            class="form-control"
+            placeholder="upload Files"
+            aria-label="FilesUpload"
+            aria-describedby="addon-wrapping"
+            disabled
+          />
+        </div>
+      </div>
+
+      <div class="flex-nowrap justify-content-center" style="padding: 2rem">
+        <div>
+          <button
+            class="btn btn-primary disabled"
+            type="button"
+            id="startValidationButton"
+          >
+            Validate
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-nowrap">
+        <table id="table">
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
     </div>
-    <p class="lead">Stundenzettel-Validator</p>
-    <hr class="my-4">
-</div>
-
-<div class="input-group flex-nowrap justify-content-center">
-    <div>
-        <label for="uploadInputSZ">StundenZettel als multy file upload</label>
-        <input type="file" id="uploadInputSZ" multiple class="form-control"
-               placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
-    </div>
-    <div>
-        <label for="uploadInputList">Liste der Tutor:innen und ihrer Stunden</label>
-        <input type="file" id="uploadInputList" multiple class="form-control"
-               placeholder="upload Files" aria-label="FilesUpload" aria-describedby="addon-wrapping">
-    </div>
-</div>
-
-<div class="flex-nowrap justify-content-center" style="padding: 2rem">
-    <div>
-        <button class="btn btn-primary disabled" type="button" id="startValidationButton" onclick="validationEventHandle()">Validate</button>
-    </div>
-</div>
-
-<div class="flex-nowrap">
-    <table id="table">
-        <tbody id="tBody">
-
-
-        </tbody>
-    </table>
-</div>
-
-</div>
-</body>
+  </body>
 </html>
