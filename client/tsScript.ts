@@ -175,6 +175,7 @@ const getPageText = async (pdf: Pdf, pageNo: number): Promise<string[]> => {
   const tokenizedText = await page.getTextContent();
   let pageText = tokenizedText.items.map((token) => token.str.trim());
   pageText = pageText.filter((token) => token.trim() !== '');
+  console.log(pageText);
   return pageText;
 };
 
