@@ -187,8 +187,6 @@ async function getPageText(pdf: Pdf, pageNo: number): Promise<string[]> {
   const tokenizedText = await page.getTextContent();
   let pageText = tokenizedText.items.map((token) => token.str.trim());
   pageText = pageText.filter((token) => token.trim() !== '');
-  console.log(pageText.length == 0);
-  tryOcr(pdf);
   return pageText;
 }
 
@@ -200,6 +198,8 @@ async function readSZFiles(list: File[]) {
 
     try {
       const pdf: Pdf = await pdfjsLib.getDocument({ data }).promise;
+      console.log(pdf);
+
       const maxPages = pdf.numPages;
       for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
         let pageText: string[] = await getPageText(pdf, pageNo);
@@ -380,7 +380,7 @@ async function tryOcr(pdf: Pdf) {
   try {
     let data = [];
     pdf.getPage(1).then((page) => {
-      let scale = 1.5;
+      let scale = 3;
       let viewport = page.getViewport({ scale });
       let canvasdiv = document.getElementById('canvasDiv');
 
@@ -396,7 +396,7 @@ async function tryOcr(pdf: Pdf) {
       task.promise.then(() => {
         data.push(canvas.toDataURL('image/jpg'));
         console.log(data.length + ' page(s) loaded in data');
-        // console.log(canvas.toDataURL('image/jpg'));
+        ocr(canvas.toDataURL());
       });
     });
   } catch (error) {
@@ -404,20 +404,20 @@ async function tryOcr(pdf: Pdf) {
   }
 }
 
-async function ocr(pdf) {
+async function ocr(pdf_as_jpg) {
   const worker = tesseract.createWorker({
     logger: (m) => console.log(m),
   });
 
   (async () => {
     await worker.load();
-    await worker.loadLanguage('eng');
-    await worker.initialize('eng');
+    await worker.loadLanguage('deu');
+    await worker.initialize('deu');
     const {
       data: { text },
     } = await worker.recognize(
       // 'https://tesseract.projectnaptha.com/img/eng_bw.png',
-      pdf,
+      pdf_as_jpg,
     );
     console.log(text);
     await worker.terminate();
@@ -472,11 +472,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
-
-// todo
-/*
-  aktuell werden die sollstunden in stundenzettel.hours gespeichert
-  -> in zukunft diese im Student speichern und dem Student einen Stundenzettel[]
-  => validierung und rendern pro Student mölich
-  => logischerer und angenehmerer aufbau
-*/

@@ -40,7 +40,7 @@ th {
     clip-path: circle(25% at 0 75%);
 }
 
-canvas {
+canvas#canvas-club {
     position: absolute;
     z-index: -5;
 }
