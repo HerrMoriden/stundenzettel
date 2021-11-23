@@ -1,6 +1,6 @@
-/* ##########################
-    T Y P E S
-############################# */
+/* ###################################
+    T Y P E S   A N D   I M P O R T S
+###################################### */
 
 // pdfjs stuff
 
@@ -16,6 +16,13 @@ type PageText = {
 
 type PdfPage = {
   getTextContent: () => Promise<PageText>;
+  getViewport: ({ scale: number }) => Viewport;
+  render: (any: any) => any;
+};
+
+type Viewport = {
+  height: number;
+  width: number;
 };
 
 type Pdf = {
@@ -143,6 +150,11 @@ let ContractList: ContractsList = new ContractsList();
 let StundenzettelList: StundenZettel[] = [];
 
 let holidayLibrary: HolidayLibrary;
+let pdfjsLib = window['pdfjs-dist/build/pdf'];
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+
+let tesseract = window['Tesseract'];
 
 // #######################################
 
@@ -170,21 +182,18 @@ function handleContractListInput(list: File) {
   }
 }
 
-const getPageText = async (pdf: Pdf, pageNo: number): Promise<string[]> => {
+async function getPageText(pdf: Pdf, pageNo: number): Promise<string[]> {
   const page = await pdf.getPage(pageNo);
   const tokenizedText = await page.getTextContent();
   let pageText = tokenizedText.items.map((token) => token.str.trim());
   pageText = pageText.filter((token) => token.trim() !== '');
-  console.log(pageText);
+  console.log(pageText.length == 0);
+  tryOcr(pdf);
   return pageText;
-};
+}
 
 async function readSZFiles(list: File[]) {
-  let pdfjsLib = window['pdfjs-dist/build/pdf'];
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    '//mozilla.github.io/pdf.js/build/pdf.worker.js';
-
-  const pageTextPromises: Promise<string[]>[] = [];
+  const pageTextPromises: string[][] = [];
 
   for (let sz of list) {
     let data: ArrayBuffer = await sz.arrayBuffer();
@@ -193,7 +202,9 @@ async function readSZFiles(list: File[]) {
       const pdf: Pdf = await pdfjsLib.getDocument({ data }).promise;
       const maxPages = pdf.numPages;
       for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
-        pageTextPromises.push(getPageText(pdf, pageNo));
+        let pageText: string[] = await getPageText(pdf, pageNo);
+        if (pageText.length == 0) tryOcr(pdf);
+        pageTextPromises.push(pageText);
       }
     } catch (e) {
       console.error(e);
@@ -363,6 +374,54 @@ function renderResultTable() {
       console.log(error);
     }
   }
+}
+
+async function tryOcr(pdf: Pdf) {
+  try {
+    let data = [];
+    pdf.getPage(1).then((page) => {
+      let scale = 1.5;
+      let viewport = page.getViewport({ scale });
+      let canvasdiv = document.getElementById('canvasDiv');
+
+      var canvas = document.createElement('canvas');
+      canvasdiv.appendChild(canvas);
+
+      let canvasContext = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      let task = page.render({ canvasContext, viewport });
+
+      task.promise.then(() => {
+        data.push(canvas.toDataURL('image/jpg'));
+        console.log(data.length + ' page(s) loaded in data');
+        // console.log(canvas.toDataURL('image/jpg'));
+      });
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+async function ocr(pdf) {
+  const worker = tesseract.createWorker({
+    logger: (m) => console.log(m),
+  });
+
+  (async () => {
+    await worker.load();
+    await worker.loadLanguage('eng');
+    await worker.initialize('eng');
+    const {
+      data: { text },
+    } = await worker.recognize(
+      // 'https://tesseract.projectnaptha.com/img/eng_bw.png',
+      pdf,
+    );
+    console.log(text);
+    await worker.terminate();
+  })();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
