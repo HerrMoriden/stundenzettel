@@ -23,6 +23,12 @@ type PdfPage = {
 type Viewport = {
   height: number;
   width: number;
+  scale: number;
+  rotation: number;
+  offsetX: number;
+  offsetY: number;
+  viewBox: number[];
+  transform: number[];
 };
 
 type Pdf = {
@@ -382,6 +388,7 @@ async function tryOcr(pdf: Pdf) {
     pdf.getPage(1).then((page) => {
       let scale = 3;
       let viewport = page.getViewport({ scale });
+      console.log(page.getViewport({scale}));
       let canvasdiv = document.getElementById('canvasDiv');
 
       var canvas = document.createElement('canvas');
@@ -413,13 +420,19 @@ async function ocr(pdf_as_jpg) {
     await worker.load();
     await worker.loadLanguage('deu');
     await worker.initialize('deu');
-    const {
-      data: { text },
-    } = await worker.recognize(
-      // 'https://tesseract.projectnaptha.com/img/eng_bw.png',
-      pdf_as_jpg,
-    );
-    console.log(text);
+
+    // const {
+    //   data: { text },
+    // } = await worker.recognize(pdf_as_jpg);
+
+    // Orientation and Script detection
+    let osdResult = await worker.detect(pdf_as_jpg);
+    console.log(osdResult);
+
+    // optical Character Recognition
+    let ocrResult = await worker.recognize(pdf_as_jpg);
+    console.log(ocrResult);
+
     await worker.terminate();
   })();
 }
@@ -433,6 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
   ) as HTMLInputElement;
   const validateBtn = document.getElementById('startValidationButton');
 
+  // initializing holiday library
   holidayLibrary = globalThis.holiday;
   holidayLibrary.setState('he');
 
@@ -462,6 +476,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // enables validation button in HTML
   function enableValidation() {
     let contractsUploaded = ContractList.contracts.length > 0;
     let szListUploaded = StundenzettelList.length > 0;
