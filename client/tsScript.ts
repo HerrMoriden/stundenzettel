@@ -204,7 +204,7 @@ async function readSZFiles(list: File[]) {
 
     try {
       const pdf: Pdf = await pdfjsLib.getDocument({ data }).promise;
-      console.log(pdf);
+      // console.log(pdf);
 
       const maxPages = pdf.numPages;
       for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
@@ -272,7 +272,6 @@ async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
 
 async function handleSZListInput(list: File[]) {
   let tokenizedTextList: string[][] = await readSZFiles(list);
-  //   console.log(tokenizedTextList);
 
   StundenzettelList = await parseTokenizedText(tokenizedTextList).then(
     (parsedList) =>
@@ -388,7 +387,6 @@ async function tryOcr(pdf: Pdf) {
     pdf.getPage(1).then((page) => {
       let scale = 3;
       let viewport = page.getViewport({ scale });
-      console.log(page.getViewport({scale}));
       let canvasdiv = document.getElementById('canvasDiv');
 
       var canvas = document.createElement('canvas');
@@ -403,7 +401,9 @@ async function tryOcr(pdf: Pdf) {
       task.promise.then(() => {
         data.push(canvas.toDataURL('image/jpg'));
         console.log(data.length + ' page(s) loaded in data');
-        ocr(canvas.toDataURL());
+        for (const d of data) {
+          ocr(d);
+        }
       });
     });
   } catch (error) {
@@ -487,3 +487,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+/* todo
+ * leider sind die scans nicht alle gleich groß, genauso waren die gescannten seiten nicht immer gleich positioniert
+ * => daraus resultiert dass die inhalte der scans anders positioniert sind
+ * zu dem sind die scheissdinger nicht immer richtig positioniert im sinne ihrer rotations
+ * eigentlich sollte tesseracts OSD(Orientation and script detection) das erkennen aber ... natürlich nicht
+ *
+ * desweiteren is tesseract ziemlich scheisse darin dinge aus tabellen auszulesen
+ *
+ * Lösung?!:
+ * im result objekt von tesseract ist zu jedem wort unter anderem dessen position auf dem bild gespeichert
+ * irgendwie das früher erhalten und dann anhand der Position eine art Map generieren aus rectangles.
+ * man kann der tesseract.worker.recognize funktion ein rectangle ({left, top, width, height}) mitgeben um nur dieses
+ * rectangle auszulesen
+ */
+/**
+ * ergebnis review 26.11.21:
+ * das tool wird genutzt für alle SZ ab release => scheiss auf scans ... ez
+ * die contract csv wird erweitert was mich aktuell aber noch nicht juckt
+ * alles was das tool nicht erkennt wird manuel überprüft
+ * falls isSigned() nicht implementiert ist - manuelle überprüfung mit canvas ausscnitt
+ */
