@@ -209,7 +209,7 @@ async function readSZFiles(list: File[]) {
       const maxPages = pdf.numPages;
       for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
         let pageText: string[] = await getPageText(pdf, pageNo);
-        if (pageText.length == 0) tryOcr(pdf);
+        // if (pageText.length == 0) tryOcr(pdf);
         pageTextPromises.push(pageText);
       }
     } catch (e) {
@@ -231,22 +231,25 @@ async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
         header[7], // fBereich
       );
       let endOfTable = tokenList.indexOf('Gesamtstunden:');
-      let table = tokenList.slice(14, endOfTable);
+      let table: string[] = tokenList.slice(14, endOfTable);
 
-      for (let i = 0; i < table.length; i += 2) {
+      for (let i = 0; i < table.length; i++) {
         if (table[i].indexOf(':') !== -1) {
           let rowSum = table[i + 2];
           let mid = rowSum?.indexOf(':');
-          const hours: number = +rowSum?.slice(0, mid);
-          let minutes: number = +rowSum?.slice(mid + 1, rowSum.length + 1);
+          const hours: number = Number(rowSum?.slice(0, mid));
+          let minutes: number = Number(
+            rowSum?.slice(mid + 1, rowSum.length + 1),
+          );
           minutes = minutes / 60;
 
           sz.setRowEntries({
-            day: +table[i - 1],
+            day: Number(table[i - 1]),
             start: table[i],
             end: table[i + 1],
             sum: hours + minutes,
           });
+          i += 2;
         }
       }
       sz.gesamtstunden = tokenList.length
@@ -256,6 +259,7 @@ async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
           )
         : -2;
 
+      // if contracts are uploaded, set it in studentobject
       if (ContractList.contracts.length > 0) {
         // todo das klappt noch net
         let stdFromContract: Student | undefined = ContractList.getStdByName(
@@ -296,6 +300,23 @@ async function handleValidation() {
 
 async function validate(sz: StundenZettel) {
   try {
+    // check if name, fname and fbereich
+    let reason: string | null =
+      sz.name.length <= 3
+        ? 'Name'
+        : sz.fName.length <= 3
+        ? 'Nachname'
+        : sz.fBereich.length <= 2
+        ? 'Fachbereich'
+        : null;
+    if (reason != null) {
+      sz.addIssue(`Der ${reason} ist zu kurz.`);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+
+  try {
     // check for workday == holiday
     for (const entry of sz.rowEntries) {
       let workedDay = new Date(new Date().getFullYear(), +sz.month, entry.day);
@@ -313,7 +334,7 @@ async function validate(sz: StundenZettel) {
   try {
     // validation workHours = sum of worked hours
     let sumOfWorkHours = 0;
-    sz.rowEntries.map((entry) => (sumOfWorkHours += +entry.sum));
+    sz.rowEntries.map((entry) => (sumOfWorkHours += entry.sum));
     if (sumOfWorkHours !== sz.gesamtstunden) {
       sz.addIssue(
         `Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein.`,
@@ -381,62 +402,6 @@ function renderResultTable() {
   }
 }
 
-async function tryOcr(pdf: Pdf) {
-  try {
-    let data = [];
-    pdf.getPage(1).then((page) => {
-      let scale = 3;
-      let viewport = page.getViewport({ scale });
-      let canvasdiv = document.getElementById('canvasDiv');
-
-      var canvas = document.createElement('canvas');
-      canvasdiv.appendChild(canvas);
-
-      let canvasContext = canvas.getContext('2d');
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      let task = page.render({ canvasContext, viewport });
-
-      task.promise.then(() => {
-        data.push(canvas.toDataURL('image/jpg'));
-        console.log(data.length + ' page(s) loaded in data');
-        for (const d of data) {
-          ocr(d);
-        }
-      });
-    });
-  } catch (error) {
-    console.log(error);
-  }
-}
-
-async function ocr(pdf_as_jpg) {
-  const worker = tesseract.createWorker({
-    logger: (m) => console.log(m),
-  });
-
-  (async () => {
-    await worker.load();
-    await worker.loadLanguage('deu');
-    await worker.initialize('deu');
-
-    // const {
-    //   data: { text },
-    // } = await worker.recognize(pdf_as_jpg);
-
-    // Orientation and Script detection
-    let osdResult = await worker.detect(pdf_as_jpg);
-    console.log(osdResult);
-
-    // optical Character Recognition
-    let ocrResult = await worker.recognize(pdf_as_jpg);
-    console.log(ocrResult);
-
-    await worker.terminate();
-  })();
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   const szInput: HTMLInputElement = document.getElementById(
     'uploadInputSZ',
@@ -488,20 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-/* todo
- * leider sind die scans nicht alle gleich groß, genauso waren die gescannten seiten nicht immer gleich positioniert
- * => daraus resultiert dass die inhalte der scans anders positioniert sind
- * zu dem sind die scheissdinger nicht immer richtig positioniert im sinne ihrer rotations
- * eigentlich sollte tesseracts OSD(Orientation and script detection) das erkennen aber ... natürlich nicht
- *
- * desweiteren is tesseract ziemlich scheisse darin dinge aus tabellen auszulesen
- *
- * Lösung?!:
- * im result objekt von tesseract ist zu jedem wort unter anderem dessen position auf dem bild gespeichert
- * irgendwie das früher erhalten und dann anhand der Position eine art Map generieren aus rectangles.
- * man kann der tesseract.worker.recognize funktion ein rectangle ({left, top, width, height}) mitgeben um nur dieses
- * rectangle auszulesen
- */
+
 /**
  * ergebnis review 26.11.21:
  * das tool wird genutzt für alle SZ ab release => scheiss auf scans ... ez
@@ -509,3 +461,59 @@ document.addEventListener('DOMContentLoaded', () => {
  * alles was das tool nicht erkennt wird manuel überprüft
  * falls isSigned() nicht implementiert ist - manuelle überprüfung mit canvas ausscnitt
  */
+
+// async function tryOcr(pdf: Pdf) {
+//   try {
+//     let data = [];
+//     pdf.getPage(1).then((page) => {
+//       let scale = 3;
+//       let viewport = page.getViewport({ scale });
+//       let canvasdiv = document.getElementById('canvasDiv');
+
+//       var canvas = document.createElement('canvas');
+//       canvasdiv.appendChild(canvas);
+
+//       let canvasContext = canvas.getContext('2d');
+//       canvas.height = viewport.height;
+//       canvas.width = viewport.width;
+
+//       let task = page.render({ canvasContext, viewport });
+
+//       task.promise.then(() => {
+//         data.push(canvas.toDataURL('image/jpg'));
+//         console.log(data.length + ' page(s) loaded in data');
+//         for (const d of data) {
+//           ocr(d);
+//         }
+//       });
+//     });
+//   } catch (error) {
+//     console.log(error);
+//   }
+// }
+
+// async function ocr(pdf_as_jpg) {
+//   const worker = tesseract.createWorker({
+//     logger: (m) => console.log(m),
+//   });
+
+//   (async () => {
+//     await worker.load();
+//     await worker.loadLanguage('deu');
+//     await worker.initialize('deu');
+
+//     // const {
+//     //   data: { text },
+//     // } = await worker.recognize(pdf_as_jpg);
+
+//     // Orientation and Script detection
+//     let osdResult = await worker.detect(pdf_as_jpg);
+//     console.log(osdResult);
+
+//     // optical Character Recognition
+//     let ocrResult = await worker.recognize(pdf_as_jpg);
+//     console.log(ocrResult);
+
+//     await worker.terminate();
+//   })();
+// }
