@@ -142,6 +142,7 @@ class ProgressBar {
   label: string;
   color: string;
   targetDiff: HTMLDivElement;
+  progressBarLabel: HTMLLabelElement;
   progressElement: Element;
 
   constructor(noe: number, type: string, label: string, color: string) {
@@ -158,8 +159,11 @@ class ProgressBar {
   initProgressBar(): void {
     this.targetDiff.classList.add('progress');
 
-    let progEl: string = `<div class="progress-bar-container">
-        <label for="progress-bar-${this.type}-${this.label}">
+    let progEl: string =
+    `<div class="progress-bar-container">
+        <label
+        for="progress-bar-${this.type}-${this.label}"
+        id="label-${this.type}-${this.label}">
           ${this.type}: ${this.label}.
         </label>
         <div
@@ -188,6 +192,7 @@ class ProgressBar {
   async updateProgress(): Promise<void> {
     this.progress += 100 / this.numOfElements;
     if (this.progress > 100) this.progress = 100;
+    if (this.progress === 100) {this.endProgression()};
     this.renderProgressBar();
   }
 
@@ -195,6 +200,14 @@ class ProgressBar {
     this.progressElement.setAttribute('style', `width: ${this.progress}%`);
     this.progressElement.setAttribute('aria-valuenow', `${this.progress}`);
     this.progressElement.innerHTML = this.progress + '%';
+  }
+
+  endProgression() {
+    this.progressBarLabel = document.getElementById(`label-${this.type}-${this.label}`) as HTMLLabelElement;
+
+    this.progressElement.classList.remove('progress-bar-animated');
+    let checkMark = '&#10004;';
+    this.progressBarLabel.innerHTML = this.progressBarLabel.innerHTML + checkMark
   }
 
   deleteProressBar(): void {
@@ -446,19 +459,23 @@ function renderResultTable() {
     }
 
     try {
+      let checkMark = '&#10004';
+      let crossMark = '&#10060;';
+
       let fName = sz.fName;
       let name = sz.name;
       let month = sz.month;
       let isValid = sz.isValid;
-      let rowData = [fName, name, month, isValid];
+      let rowData = [fName, name, month, isValid ? checkMark : crossMark];
 
       // create row to insert data
       let tr = tBody.appendChild(document.createElement('TR'));
       // insert data
       for (let i = 0; i < rowData.length; i++) {
         let td = tr.appendChild(document.createElement('TD'));
-        let content = document.createTextNode(rowData[i].toString());
-        td.appendChild(content);
+        // let content = document.createTextNode(rowData[i].toString());
+        td.innerHTML = rowData[i]
+        // td.appendChild(content);
       }
     } catch (error) {
       console.log(error);
