@@ -154,7 +154,6 @@ class ProgressBar {
     this.targetDiff = document.getElementById(
       'progress-bar-target-diff',
     ) as HTMLDivElement;
-
   }
 
   initProgressBar(): void {
@@ -251,7 +250,6 @@ function handleContractListInput(list: File) {
           );
         }
       }
-      console.log(ContractList);
     };
     reader.readAsText(list);
   } catch (e) {
@@ -414,7 +412,6 @@ async function validate(sz: StundenZettel) {
     // validation workHours = sum of worked hours
     let sumOfWorkHours = 0;
     sz.rowEntries.map((entry) => (sumOfWorkHours += entry.sum));
-
     if (sumOfWorkHours !== sz.gesamtstunden) {
       sz.addIssue(
         `Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein.`,
