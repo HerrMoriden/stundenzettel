@@ -73,21 +73,44 @@ canvas {
     }
 }
 
-#progress-bar {
+#progress-bar-target-diff {
     margin: 2rem;
     margin-top: 0.7rem;
     display: flex;
     flex-direction: column;
-    flex-wrap: wrap;
-    height: 5rem;
+    flex-wrap: nowrap;
+    height: 10%;
     width: 80%;
-    align-items: flex-start;
+    align-items: center;
     align-content: flex-start;
-    justify-content: space-evenly;
+    justify-content: flex-start;
 }
 
 .progress-bar {
     color: #f5f5f5;
     align-items: flex-start;
     padding-left: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar-container {
+    width: 90%;
+    padding: 0.5rem 1rem;
+    margin: 1rem 2rem;
+    border-radius: 1rem 0;
+    border-left: 1px black solid;
+    border-top: 1px black solid;
+    box-shadow: 0 0.5rem 0.5rem;
+}
+
+.progress-bar-container > label {
+    color: #242424;
+}
+
+.progress-bar-container:first-child {
+    margin-top: 2rem;
+}
+
+.progress-bar-container:last-child {
+    margin-bottom: 2rem;
 }

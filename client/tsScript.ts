@@ -150,13 +150,29 @@ class ProgressBar {
     this.type = type;
     this.label = label;
     this.color = color;
-    this.targetDiff = document.getElementById('progress-bar') as HTMLDivElement;
+    this.targetDiff = document.getElementById(
+      'progress-bar-target-diff',
+    ) as HTMLDivElement;
   }
 
   initProgressBar(): void {
     this.targetDiff.classList.add('progress');
 
-    let progEl: string = `<div class="progress-bar progress-bar-striped progress-bar-animated bg-${this.color} ${this.type}-${this.label}" role="progressbar" style="width: ${this.progress}%;" aria-valuenow="${this.progress}" aria-valuemin="0" aria-valuemax="100">${this.type}: ${this.label}</div>`;
+    let progEl: string = `<div class="progress-bar-container">
+        <label for="progress-bar-${this.type}-${this.label}">
+          ${this.type}: ${this.label}.
+        </label>
+        <div
+          id="progress-bar-${this.type}-${this.label}"
+          class="progress-bar progress-bar-striped progress-bar-animated bg-${this.color} ${this.type}-${this.label}"
+          role="progressbar" style="width: ${this.progress}%;"
+          aria-valuenow="${this.progress}"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+        </div>
+      </div>
+    `;
 
     this.targetDiff.innerHTML = this.targetDiff.innerHTML + progEl;
 
@@ -221,7 +237,6 @@ function handleContractListInput(list: File) {
           );
         }
       }
-      console.log(ContractList);
     };
     reader.readAsText(list);
   } catch (e) {
@@ -246,6 +261,7 @@ async function handleSZListInput(list: File[]) {
       ),
   );
 }
+
 async function readSZFiles(list: File[]) {
   let pdfjsLib = window['pdfjs-dist/build/pdf'];
   pdfjsLib.GlobalWorkerOptions.workerSrc =
@@ -382,7 +398,7 @@ async function validate(sz: StundenZettel) {
   try {
     // validation workHours = sum of worked hours
     let sumOfWorkHours = 0;
-    sz.rowEntries.map((entry) => sumOfWorkHours += entry.sum);
+    sz.rowEntries.map((entry) => (sumOfWorkHours += entry.sum));
     if (sumOfWorkHours !== sz.gesamtstunden) {
       sz.addIssue(
         `Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein.`,
@@ -474,7 +490,7 @@ document.addEventListener('DOMContentLoaded', () => {
   progressBarValidation = new ProgressBar(
     0,
     'Validation',
-    'Validation',
+    'Validate',
     'warning',
   );
 
