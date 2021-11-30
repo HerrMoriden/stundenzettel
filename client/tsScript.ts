@@ -473,9 +473,7 @@ function renderResultTable() {
       // insert data
       for (let i = 0; i < rowData.length; i++) {
         let td = tr.appendChild(document.createElement('TD'));
-        // let content = document.createTextNode(rowData[i].toString());
-        td.innerHTML = rowData[i]
-        // td.appendChild(content);
+        td.innerHTML = rowData[i];
       }
     } catch (error) {
       console.log(error);
