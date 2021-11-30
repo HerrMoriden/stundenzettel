@@ -1,5 +1,13 @@
 tr > td {
     padding: 1rem;
+    color: #242424;
+}
+
+tr {
+    border: 1px black solid;
+    margin: 0.3rem auto;
+    padding: 0.1rem auto;
+    background-color: rgba(69, 69, 69, 0.3)
 }
 
 div#bodyDiv {
@@ -15,12 +23,13 @@ body {
     color: rgb(255, 131, 0);
 }
 
-th {
-    border: 1px solid black;
+thead > tr > td {
+    margin-bottom: 0.5rem;
+    color: inherit;
+    background-color: rgba(69, 69, 69, 0.5);
 }
 
 .bg-circle {
-
     background-blend-mode: multiply;
     height: 135vh;
     width: 135vh;
@@ -71,4 +80,46 @@ canvas {
         transform: scale(0.95);
         box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
     }
+}
+
+#progress-bar-target-diff {
+    margin: 2rem;
+    margin-top: 0.7rem;
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    height: 10%;
+    width: 80%;
+    align-items: center;
+    align-content: flex-start;
+    justify-content: flex-start;
+}
+
+.progress-bar {
+    color: #f5f5f5;
+    align-items: flex-start;
+    padding-left: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar-container {
+    width: 90%;
+    padding: 0.5rem 1rem;
+    margin: 1rem 2rem;
+    border-radius: 1rem 0;
+    border-left: 1px black solid;
+    border-top: 1px black solid;
+    box-shadow: 0 0.5rem 0.5rem;
+}
+
+.progress-bar-container > label {
+    color: #242424;
+}
+
+.progress-bar-container:first-child {
+    margin-top: 2rem;
+}
+
+.progress-bar-container:last-child {
+    margin-bottom: 2rem;
 }

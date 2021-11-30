@@ -62,7 +62,7 @@ class Student {
   name: string;
   hours: number;
 
-  constructor(fname, name, hr) {
+  constructor(fname: string, name: string, hr: number) {
     this.firstName = fname.trim().toLowerCase();
     this.name = name.trim().toLowerCase();
     this.hours = hr;
@@ -135,6 +135,87 @@ class StundenZettel {
   }
 }
 
+class ProgressBar {
+  progress: number;
+  numOfElements: number;
+  type: string;
+  label: string;
+  color: string;
+  targetDiff: HTMLDivElement;
+  progressBarLabel: HTMLLabelElement;
+  progressElement: Element;
+
+  constructor(noe: number, type: string, label: string, color: string) {
+    this.progress = 0;
+    this.numOfElements = noe;
+    this.type = type;
+    this.label = label;
+    this.color = color;
+    this.targetDiff = document.getElementById(
+      'progress-bar-target-diff',
+    ) as HTMLDivElement;
+  }
+
+  initProgressBar(): void {
+    this.targetDiff.classList.add('progress');
+
+    let progEl: string =
+    `<div class="progress-bar-container">
+        <label
+        for="progress-bar-${this.type}-${this.label}"
+        id="label-${this.type}-${this.label}">
+          ${this.type}: ${this.label}.
+        </label>
+        <div
+          id="progress-bar-${this.type}-${this.label}"
+          class="progress-bar progress-bar-striped progress-bar-animated bg-${this.color} ${this.type}-${this.label}"
+          role="progressbar" style="width: ${this.progress}%;"
+          aria-valuenow="${this.progress}"
+          aria-valuemin="0"
+          aria-valuemax="100"
+        >
+        </div>
+      </div>
+    `;
+
+    this.targetDiff.innerHTML = this.targetDiff.innerHTML + progEl;
+
+    this.progressElement = this.targetDiff.getElementsByClassName(
+      this.type + '-' + this.label,
+    )[0];
+  }
+
+  addItems(n: number): void {
+    this.numOfElements += n;
+  }
+
+  async updateProgress(): Promise<void> {
+    this.progress += 100 / this.numOfElements;
+    if (this.progress > 100) this.progress = 100;
+    if (this.progress === 100) {this.endProgression()};
+    this.renderProgressBar();
+  }
+
+  renderProgressBar(): void {
+    this.progressElement.setAttribute('style', `width: ${this.progress}%`);
+    this.progressElement.setAttribute('aria-valuenow', `${this.progress}`);
+    this.progressElement.innerHTML = this.progress + '%';
+  }
+
+  endProgression() {
+    this.progressBarLabel = document.getElementById(`label-${this.type}-${this.label}`) as HTMLLabelElement;
+
+    this.progressElement.classList.remove('progress-bar-animated');
+    let checkMark = '&#10004;';
+    this.progressBarLabel.innerHTML = this.progressBarLabel.innerHTML + checkMark
+  }
+
+  deleteProressBar(): void {
+    this.targetDiff.innerHTML = '';
+    this.targetDiff.classList.remove('progress');
+  }
+}
+
 /* ##########################
     G L O B A L S
 ############################# */
@@ -143,6 +224,12 @@ let ContractList: ContractsList = new ContractsList();
 let StundenzettelList: StundenZettel[] = [];
 
 let holidayLibrary: HolidayLibrary;
+
+// USER FEEDBACK
+let progressBarSZListRead: ProgressBar;
+let progressBarSZListParse: ProgressBar;
+
+let progressBarValidation: ProgressBar;
 
 // #######################################
 
@@ -158,7 +245,7 @@ function handleContractListInput(list: File) {
             new Student(
               firstName.trim().toLowerCase(),
               name.trim().toLowerCase(),
-              hours.trim().toLowerCase(),
+              Number(hours.trim().toLowerCase()),
             ),
           );
         }
@@ -170,14 +257,23 @@ function handleContractListInput(list: File) {
   }
 }
 
-const getPageText = async (pdf: Pdf, pageNo: number): Promise<string[]> => {
-  const page = await pdf.getPage(pageNo);
-  const tokenizedText = await page.getTextContent();
-  let pageText = tokenizedText.items.map((token) => token.str.trim());
-  pageText = pageText.filter((token) => token.trim() !== '');
-  console.log(pageText);
-  return pageText;
-};
+async function handleSZListInput(list: File[]) {
+  progressBarSZListRead.initProgressBar();
+  progressBarSZListRead.addItems(list.length);
+
+  let tokenizedTextList: string[][] = await readSZFiles(list);
+  //   console.log(tokenizedTextList);
+
+  progressBarSZListParse.initProgressBar();
+  progressBarSZListParse.addItems(list.length);
+
+  StundenzettelList = await parseTokenizedText(tokenizedTextList).then(
+    (parsedList) =>
+      parsedList.sort((a: StundenZettel, b: StundenZettel) =>
+        a?.name?.localeCompare(b?.name),
+      ),
+  );
+}
 
 async function readSZFiles(list: File[]) {
   let pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -193,7 +289,12 @@ async function readSZFiles(list: File[]) {
       const pdf: Pdf = await pdfjsLib.getDocument({ data }).promise;
       const maxPages = pdf.numPages;
       for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
-        pageTextPromises.push(getPageText(pdf, pageNo));
+        pageTextPromises.push(
+          getPageText(pdf, pageNo).then(async (res) => {
+            await progressBarSZListRead.updateProgress();
+            return res;
+          }),
+        );
       }
     } catch (e) {
       console.error(e);
@@ -201,6 +302,20 @@ async function readSZFiles(list: File[]) {
   }
   return await Promise.all(pageTextPromises);
 }
+
+const getPageText = async (pdf: Pdf, pageNo: number): Promise<string[]> => {
+  const page = await pdf.getPage(pageNo);
+  if (!page) {
+    console.log('hääää');
+  }
+  const tokenizedText = await page.getTextContent();
+  let pageText = tokenizedText.items.map((token) => token.str.trim());
+  pageText = pageText.filter((token) => token.trim() !== '');
+  if (pageText.length < 1) {
+    console.log('dafuq', page);
+  }
+  return pageText;
+};
 
 async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
   return list.map((tokenList) => {
@@ -216,7 +331,7 @@ async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
       let endOfTable = tokenList.indexOf('Gesamtstunden:');
       let table = tokenList.slice(14, endOfTable);
 
-      for (let i = 0; i < table.length; i += 2) {
+      for (let i = 0; i < table.length; i += 1) {
         if (table[i].indexOf(':') !== -1) {
           let rowSum = table[i + 2];
           let mid = rowSum?.indexOf(':');
@@ -230,6 +345,8 @@ async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
             end: table[i + 1],
             sum: hours + minutes,
           });
+
+          i += 3;
         }
       }
       sz.gesamtstunden = tokenList.length
@@ -248,29 +365,26 @@ async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
           sz.setStudentData(stdFromContract);
         }
       }
+
+      progressBarSZListParse.updateProgress();
+
       return sz;
     }
   });
 }
 
-async function handleSZListInput(list: File[]) {
-  let tokenizedTextList: string[][] = await readSZFiles(list);
-  //   console.log(tokenizedTextList);
-
-  StundenzettelList = await parseTokenizedText(tokenizedTextList).then(
-    (parsedList) =>
-      parsedList.sort((a: StundenZettel, b: StundenZettel) =>
-        a?.name?.localeCompare(b?.name),
-      ),
-  );
-}
-
 async function handleValidation() {
   let validationPromises: Promise<void>[] = [];
+  progressBarValidation.initProgressBar();
+  progressBarValidation.addItems(StundenzettelList.length);
 
   try {
     for (const sz of StundenzettelList) {
-      validationPromises.push(validate(sz));
+      validationPromises.push(
+        validate(sz).then(() => {
+          progressBarValidation.updateProgress();
+        }),
+      );
     }
   } catch (err) {
     // todo
@@ -297,7 +411,7 @@ async function validate(sz: StundenZettel) {
   try {
     // validation workHours = sum of worked hours
     let sumOfWorkHours = 0;
-    sz.rowEntries.map((entry) => (sumOfWorkHours += +entry.sum));
+    sz.rowEntries.map((entry) => (sumOfWorkHours += entry.sum));
     if (sumOfWorkHours !== sz.gesamtstunden) {
       sz.addIssue(
         `Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein.`,
@@ -345,19 +459,21 @@ function renderResultTable() {
     }
 
     try {
+      let checkMark = '&#10004';
+      let crossMark = '&#10060;';
+
       let fName = sz.fName;
       let name = sz.name;
       let month = sz.month;
       let isValid = sz.isValid;
-      let rowData = [fName, name, month, isValid];
+      let rowData = [fName, name, month, isValid ? checkMark : crossMark];
 
       // create row to insert data
       let tr = tBody.appendChild(document.createElement('TR'));
       // insert data
       for (let i = 0; i < rowData.length; i++) {
         let td = tr.appendChild(document.createElement('TD'));
-        let content = document.createTextNode(rowData[i].toString());
-        td.appendChild(content);
+        td.innerHTML = rowData[i];
       }
     } catch (error) {
       console.log(error);
@@ -374,10 +490,35 @@ document.addEventListener('DOMContentLoaded', () => {
   ) as HTMLInputElement;
   const validateBtn = document.getElementById('startValidationButton');
 
+  // initialize Holiday library
   holidayLibrary = globalThis.holiday;
   holidayLibrary.setState('he');
 
+  // initialize progressbar classes
+  progressBarSZListRead = new ProgressBar(
+    0,
+    'StundenZettel',
+    'Read',
+    'success',
+  );
+  progressBarSZListParse = new ProgressBar(0, 'StundenZettel', 'Parse', 'info');
+  progressBarValidation = new ProgressBar(
+    0,
+    'Validation',
+    'Validate',
+    'warning',
+  );
+
+  contractsInput.addEventListener('change', async () => {
+    if (contractsInput.files[0] !== undefined) {
+      await handleContractListInput(contractsInput.files[0]);
+      szInput.disabled = false;
+      enableValidation();
+    }
+  });
+
   szInput.addEventListener('change', async () => {
+    disableValidation();
     if (szInput.files[0] !== undefined) {
       let temp =
         szInput.files.length < 1 ? [].concat(szInput.files)[0] : szInput.files;
@@ -386,14 +527,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(StundenzettelList);
         enableValidation();
       });
-    }
-  });
-
-  contractsInput.addEventListener('change', async () => {
-    if (contractsInput.files[0] !== undefined) {
-      await handleContractListInput(contractsInput.files[0]);
-      szInput.disabled = false;
-      enableValidation();
     }
   });
 
@@ -411,6 +544,11 @@ document.addEventListener('DOMContentLoaded', () => {
       validateBtn.classList.remove('disabled');
       validateBtn.classList.toggle('blob');
     }
+  }
+
+  function disableValidation() {
+    validateBtn.classList.remove('blob');
+    validateBtn.classList.add('disabled');
   }
 });
 
