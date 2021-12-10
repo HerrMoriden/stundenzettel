@@ -16,6 +16,19 @@ type PageText = {
 
 type PdfPage = {
   getTextContent: () => Promise<PageText>;
+  getViewport: ({ scale: number }) => Viewport;
+  render: (any: any) => any;
+};
+
+type Viewport = {
+  height: number;
+  width: number;
+  scale: number;
+  rotation: number;
+  offsetX: number;
+  offsetY: number;
+  viewBox: number[];
+  transform: number[];
 };
 
 type Pdf = {
@@ -144,6 +157,7 @@ class ProgressBar {
   targetDiff: HTMLDivElement;
   progressBarLabel: HTMLLabelElement;
   progressElement: Element;
+  isInitialized: boolean;
 
   constructor(noe: number, type: string, label: string, color: string) {
     this.progress = 0;
@@ -154,13 +168,13 @@ class ProgressBar {
     this.targetDiff = document.getElementById(
       'progress-bar-target-diff',
     ) as HTMLDivElement;
+    this.isInitialized = false;
   }
 
   initProgressBar(): void {
     this.targetDiff.classList.add('progress');
 
-    let progEl: string =
-    `<div class="progress-bar-container">
+    let progEl: string = `<div class="progress-bar-container">
         <label
         for="progress-bar-${this.type}-${this.label}"
         id="label-${this.type}-${this.label}">
@@ -183,6 +197,8 @@ class ProgressBar {
     this.progressElement = this.targetDiff.getElementsByClassName(
       this.type + '-' + this.label,
     )[0];
+
+    this.isInitialized = true;
   }
 
   addItems(n: number): void {
@@ -192,7 +208,9 @@ class ProgressBar {
   async updateProgress(): Promise<void> {
     this.progress += 100 / this.numOfElements;
     if (this.progress > 100) this.progress = 100;
-    if (this.progress === 100) {this.endProgression()};
+    if (this.progress === 100) {
+      this.endProgression();
+    }
     this.renderProgressBar();
   }
 
@@ -203,11 +221,14 @@ class ProgressBar {
   }
 
   endProgression() {
-    this.progressBarLabel = document.getElementById(`label-${this.type}-${this.label}`) as HTMLLabelElement;
+    this.progressBarLabel = document.getElementById(
+      `label-${this.type}-${this.label}`,
+    ) as HTMLLabelElement;
 
     this.progressElement.classList.remove('progress-bar-animated');
     let checkMark = '&#10004;';
-    this.progressBarLabel.innerHTML = this.progressBarLabel.innerHTML + checkMark
+    this.progressBarLabel.innerHTML =
+      this.progressBarLabel.innerHTML + checkMark;
   }
 
   deleteProressBar(): void {
@@ -222,13 +243,13 @@ class ProgressBar {
 
 let ContractList: ContractsList = new ContractsList();
 let StundenzettelList: StundenZettel[] = [];
+let validatedSZList: StundenZettel[] = [];
 
 let holidayLibrary: HolidayLibrary;
 
 // USER FEEDBACK
 let progressBarSZListRead: ProgressBar;
 let progressBarSZListParse: ProgressBar;
-
 let progressBarValidation: ProgressBar;
 
 // #######################################
@@ -262,10 +283,9 @@ async function handleSZListInput(list: File[]) {
   progressBarSZListRead.addItems(list.length);
 
   let tokenizedTextList: string[][] = await readSZFiles(list);
-  //   console.log(tokenizedTextList);
 
   progressBarSZListParse.initProgressBar();
-  progressBarSZListParse.addItems(list.length);
+  progressBarSZListParse.addItems(tokenizedTextList.length);
 
   StundenzettelList = await parseTokenizedText(tokenizedTextList).then(
     (parsedList) =>
@@ -280,40 +300,38 @@ async function readSZFiles(list: File[]) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     '//mozilla.github.io/pdf.js/build/pdf.worker.js';
 
-  const pageTextPromises: Promise<string[]>[] = [];
+  const pageTextsResultList: string[][] = [];
 
   for (let sz of list) {
-    let data: ArrayBuffer = await sz.arrayBuffer();
-
     try {
+      let data: ArrayBuffer = await sz.arrayBuffer();
       const pdf: Pdf = await pdfjsLib.getDocument({ data }).promise;
       const maxPages = pdf.numPages;
       for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
-        pageTextPromises.push(
-          getPageText(pdf, pageNo).then(async (res) => {
-            await progressBarSZListRead.updateProgress();
-            return res;
-          }),
-        );
+        let text = await getPageText(pdf, pageNo).then(async (res) => {
+          await progressBarSZListRead.updateProgress();
+          return res;
+        });
+        if (!(text.length > 1)) {
+          console.log('couldnt read that shit');
+          displaySZonCanvas(pdf, sz.name, sz.lastModified);
+        } else {
+          pageTextsResultList.push(text);
+        }
       }
     } catch (e) {
       console.error(e);
     }
   }
-  return await Promise.all(pageTextPromises);
+  console.log(pageTextsResultList.length);
+  return pageTextsResultList;
 }
 
 const getPageText = async (pdf: Pdf, pageNo: number): Promise<string[]> => {
   const page = await pdf.getPage(pageNo);
-  if (!page) {
-    console.log('hääää');
-  }
   const tokenizedText = await page.getTextContent();
   let pageText = tokenizedText.items.map((token) => token.str.trim());
   pageText = pageText.filter((token) => token.trim() !== '');
-  if (pageText.length < 1) {
-    console.log('dafuq', page);
-  }
   return pageText;
 };
 
@@ -375,20 +393,25 @@ async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
 
 async function handleValidation() {
   let validationPromises: Promise<void>[] = [];
-  progressBarValidation.initProgressBar();
-  progressBarValidation.addItems(StundenzettelList.length);
-
-  try {
-    for (const sz of StundenzettelList) {
-      validationPromises.push(
-        validate(sz).then(() => {
-          progressBarValidation.updateProgress();
-        }),
-      );
-    }
-  } catch (err) {
-    // todo
+  if (!progressBarValidation.isInitialized) {
+    progressBarValidation.initProgressBar();
+    progressBarValidation.addItems(StundenzettelList.length);
   }
+  if (validatedSZList != StundenzettelList) {
+    try {
+      for (const sz of StundenzettelList) {
+        validationPromises.push(
+          validate(sz).then(() => {
+            progressBarValidation.updateProgress();
+          }),
+        );
+      }
+      validatedSZList = StundenzettelList;
+    } catch (err) {
+      console.log(err);
+    }
+  }
+
   return await Promise.all(validationPromises);
 }
 
@@ -443,6 +466,8 @@ function renderResultTable() {
   const tHead = table.createTHead();
   const tableHeadColNames = ['Fist Name', 'Name', 'Month', 'Valid'];
 
+  tBody.innerHTML = '';
+
   // todo sz object keys are a little more now than needed
   for (const sz of StundenzettelList) {
     try {
@@ -479,6 +504,84 @@ function renderResultTable() {
       console.log(error);
     }
   }
+}
+
+// name is the name of the file and the id is the unix timestamp of the file
+// should be unique enough for this
+function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
+  console.log(pdf);
+
+  const targetParentDifId: string = 'accordion';
+  const targetParentDif: HTMLDivElement = document.getElementById(
+    targetParentDifId,
+  ) as HTMLDivElement;
+
+  const canvas: HTMLCanvasElement = document.createElement('canvas');
+
+  const cardHeader: string = `
+  <div class="card-header" id=heading-${pdfId}>
+    <h5 class="mb-0">
+      <button
+        class="btn btn-link"
+        data-toggle="collapse"
+        data-target="#collapse-${pdfId}"
+        aria-expanded="true"
+        aria-controls="collapseOne"
+      >
+        ${cardHeaderText}
+      </button>
+    </h5>
+  </div>
+    `;
+
+  const cardBody: string = `
+  <div
+    id="collapse-${pdfId}"
+    class="collapse"
+    aria-labelledby="heading-${pdfId}"
+    data-parent="#${targetParentDifId}"
+  >
+    <div class="card-body" id="card-body-${pdfId}"">
+
+    </div>
+  </div>
+  `;
+
+  const card1: string = `
+  <div class="card">
+    ${cardHeader}
+    ${cardBody}
+  </div>`;
+
+  const card: HTMLDivElement = document.createElement('div');
+  card.classList.add('card');
+  card.innerHTML = cardHeader + cardBody;
+
+  targetParentDif.appendChild(card);
+
+  const cardBodyEl: HTMLDivElement = document.getElementById(
+    'card-body-' + pdfId,
+  ) as HTMLDivElement;
+
+  cardBodyEl.appendChild(canvas);
+
+  pdf.getPage(1).then((page) => {
+    let canvasContext = canvas.getContext('2d');
+    const scale = 1; // todo
+    const viewport = page.getViewport({ scale });
+    canvas.height = viewport.height; //todo
+    canvas.width = viewport.width; //todo
+    let data = [];
+
+    let task = page.render({ canvasContext, viewport });
+
+    task.promise.then(() => {
+      data.push(canvas.toDataURL('image/jpg'));
+      for (const d of data) {
+        console.log(d);
+      }
+    });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

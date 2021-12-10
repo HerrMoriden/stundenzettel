@@ -123,3 +123,11 @@ canvas {
 .progress-bar-container:last-child {
     margin-bottom: 2rem;
 }
+
+#accordion {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    align-content: center;
+    width: 75%;
+}
