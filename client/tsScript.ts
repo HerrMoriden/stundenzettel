@@ -511,7 +511,7 @@ function renderResultTable() {
 function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
   console.log(pdf);
 
-  const targetParentDifId: string = 'accordion';
+  const targetParentDifId: string = 'modals';
   const targetParentDif: HTMLDivElement = document.getElementById(
     targetParentDifId,
   ) as HTMLDivElement;
@@ -522,11 +522,9 @@ function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
   <div class="card-header" id=heading-${pdfId}>
     <h5 class="mb-0">
       <button
-        class="btn btn-link"
-        data-toggle="collapse"
-        data-target="#collapse-${pdfId}"
-        aria-expanded="true"
-        aria-controls="collapseOne"
+        class="btn btn-warning"
+        data-toggle="modal"
+        data-target="#modal-${pdfId}"
       >
         ${cardHeaderText}
       </button>
@@ -536,22 +534,26 @@ function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
 
   const cardBody: string = `
   <div
-    id="collapse-${pdfId}"
-    class="collapse"
-    aria-labelledby="heading-${pdfId}"
+    id="modal-${pdfId}"
+    class="modal fade"
+    table-index="-1"
+    aria-labelledby="modal-label-${pdfId}"
     data-parent="#${targetParentDifId}"
   >
-    <div class="card-body" id="card-body-${pdfId}"">
+    <div class="modal-dialog modal-lg">
 
+      <div class="modal-body" id="modal-body-${pdfId}"">
+
+      </div>
     </div>
   </div>
   `;
 
-  const card1: string = `
-  <div class="card">
-    ${cardHeader}
-    ${cardBody}
-  </div>`;
+  // const card1: string = `
+  // <div class="card">
+  //   ${cardHeader}
+  //   ${cardBody}
+  // </div>`;
 
   const card: HTMLDivElement = document.createElement('div');
   card.classList.add('card');
@@ -560,7 +562,7 @@ function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
   targetParentDif.appendChild(card);
 
   const cardBodyEl: HTMLDivElement = document.getElementById(
-    'card-body-' + pdfId,
+    'modal-body-' + pdfId,
   ) as HTMLDivElement;
 
   cardBodyEl.appendChild(canvas);
@@ -578,7 +580,7 @@ function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
     task.promise.then(() => {
       data.push(canvas.toDataURL('image/jpg'));
       for (const d of data) {
-        console.log(d);
+        // console.log(d);
       }
     });
   });

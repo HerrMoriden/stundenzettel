@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
   <head>
     <meta charset="UTF-8" />
     <title>SZ-Validator</title>
@@ -39,7 +39,6 @@
   </head>
 
   <body>
-    <!-- <canvas id="canvas-club"></canvas> -->
     <div class="bg-circle left-corner"></div>
     <div class="bg-circle right-corner"></div>
 
@@ -100,7 +99,28 @@
       </div>
 
       <!-- MANUAL CHECKING -->
-      <div id="accordion"></div>
+      <div id="modals"></div>
+
+      <button
+        type="button"
+        class="btn btn-primary"
+        data-toggle="modal"
+        data-target=".bd-example-modal-lg"
+      >
+        Large modal
+      </button>
+
+      <div
+        class="modal fade bd-example-modal-lg"
+        tabindex="-1"
+        role="dialog"
+        aria-labelledby="myLargeModalLabel"
+        aria-hidden="true"
+      >
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">...</div>
+        </div>
+      </div>
 
       <!-- RESULT TABLE -->
       <div class="flex-nowrap">
