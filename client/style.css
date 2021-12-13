@@ -1,164 +1,182 @@
 tr > td {
-    padding: 1rem;
-    color: #242424;
+  padding: 1rem;
+  color: #242424;
 }
 
 tr {
-    border: 1px black solid;
-    margin: 0.3rem auto;
-    padding: 0.1rem auto;
-    background-color: rgba(69, 69, 69, 0.3)
+  border: 1px black solid;
+  margin: 0.3rem auto;
+  padding: 0.1rem auto;
+  background-color: rgba(69, 69, 69, 0.3);
 }
 
 div#bodyDiv {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 body {
-    background-color: #8EC5FC;
-    background-image: linear-gradient(90deg, #8EC5FC 0%, #E0C3FC 90%);
-    color: rgb(255, 131, 0);
+  background-color: #8ec5fc;
+  background-image: linear-gradient(90deg, #8ec5fc 0%, #e0c3fc 90%);
+  color: rgb(255, 131, 0);
 }
 
 thead > tr > td {
-    margin-bottom: 0.5rem;
-    color: inherit;
-    background-color: rgba(69, 69, 69, 0.5);
+  margin-bottom: 0.5rem;
+  color: inherit;
+  background-color: rgba(69, 69, 69, 0.5);
 }
 
 .bg-circle {
-    background-blend-mode: multiply;
-    height: 135vh;
-    width: 135vh;
-    position: absolute;
-    z-index: -4;
+  background-blend-mode: multiply;
+  height: 135vh;
+  width: 135vh;
+  position: absolute;
+  z-index: -4;
 }
 
 .right-corner {
-    background: linear-gradient(
-            90deg, #979fa6, #196bbe, #8a171700);
-    clip-path: circle(35% at 70rem);
+  background: linear-gradient(90deg, #979fa6, #196bbe, #8a171700);
+  clip-path: circle(35% at 70rem);
 }
 
 .left-corner {
-    background: linear-gradient(
-            270deg, #979fa6, #196bbe, #8a171700);
-    clip-path: circle(25% at 0 75%);
+  background: linear-gradient(270deg, #979fa6, #196bbe, #8a171700);
+  clip-path: circle(25% at 0 75%);
 }
 
 canvas {
-    position: absolute;
-    z-index: -5;
+  position: absolute;
+  z-index: -5;
 }
 
 .blob {
-    /*border-radius: 50%;*/
-    /*margin: 10px;*/
-    /*height: 20px;*/
-    /*width: 20px;*/
+  /*border-radius: 50%;*/
+  /*margin: 10px;*/
+  /*height: 20px;*/
+  /*width: 20px;*/
 
-    box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
-    transform: scale(1);
-    animation: pulse 2s infinite;
+  box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
-    }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
 
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
-    }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+  }
 
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
-    }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
 }
 
 #progress-bar-target-diff {
-    margin: 2rem;
-    margin-top: 0.7rem;
-    display: flex;
-    flex-direction: column;
-    flex-wrap: nowrap;
-    height: 10%;
-    width: 80%;
-    align-items: center;
-    align-content: flex-start;
-    justify-content: flex-start;
+  margin: 2rem;
+  margin-top: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  height: 10%;
+  width: 80%;
+  align-items: center;
+  align-content: flex-start;
+  justify-content: flex-start;
 }
 
 .progress-bar {
-    color: #f5f5f5;
-    align-items: flex-start;
-    padding-left: 1rem;
-    margin-bottom: 0.5rem;
+  color: #f5f5f5;
+  align-items: flex-start;
+  padding-left: 1rem;
+  margin-bottom: 0.5rem;
 }
 
 .progress-bar-container {
-    width: 90%;
-    padding: 0.5rem 1rem;
-    margin: 1rem 2rem;
-    border-radius: 1rem 0;
-    border-left: 1px black solid;
-    border-top: 1px black solid;
-    box-shadow: 0 0.5rem 0.5rem;
+  width: 90%;
+  padding: 0.5rem 1rem;
+  margin: 1rem 2rem;
+  border-radius: 1rem 0;
+  border-left: 1px black solid;
+  border-top: 1px black solid;
+  box-shadow: 0 0.5rem 0.5rem;
 }
 
 .progress-bar-container > label {
-    color: #242424;
+  color: #242424;
 }
 
 .progress-bar-container:first-child {
-    margin-top: 2rem;
+  margin-top: 2rem;
 }
 
 .progress-bar-container:last-child {
-    margin-bottom: 2rem;
+  margin-bottom: 2rem;
 }
 
 #modals {
-    display: flex;
-    flex-direction: column;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: stretch;
-    align-content: space-around;
-    width: 80%;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: stretch;
+  align-content: space-around;
+  width: 80%;
 }
 
 .card {
-    width: 50%;
-    height: 5rem;
-    align-items: center;
-    margin: 0.7rem;
-    justify-content: center;
+  width: 50%;
+  height: 5rem;
+  align-items: center;
+  margin: 0.7rem;
+  justify-content: center;
 }
 
 .card > .card-header {
-    display: flex;
-    width: 100%;
-    justify-content: center;
+  display: flex;
+  width: 100%;
+  justify-content: center;
 }
 
 .modal-dialog {
-    height: 100vh;
-    width: 100vw;
-    justify-content: center;
-    align-items: center;
+  height: 100vh;
+  width: 100vw;
+  justify-content: center;
+  align-items: center;
 }
 
 .modal-body {
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    display: flex;
-    align-items: center;
+  width: 100%;
+  height: 100%;
+  justify-content: center;
+  display: flex;
+  align-items: center;
+}
+
+#carousel-wrapper {
+    height: 80%;
+    width: 80%;
+}
+
+#carousel-parent {
+  width: 100%;
+  height: 2rem;
+}
+
+.carousel-inner {
+  height: 100%;
+  width: 100%;
+}
+
+.carousel-item > canvas {
+    top: -730px;
+
 }

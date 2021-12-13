@@ -99,6 +99,7 @@ class ContractsList {
 }
 
 class StundenZettel {
+  raw: Pdf;
   fName: string;
   name: string;
   hours: number;
@@ -112,12 +113,14 @@ class StundenZettel {
   issues?: string[];
 
   constructor(
+    raw: Pdf,
     fn: string,
     ln: string,
     bDate: string,
     month: string,
     fBereich: string,
   ) {
+    this.raw = raw;
     this.fName = fn.trim().toLowerCase();
     this.name = ln.trim().toLowerCase();
     this.bDate = bDate;
@@ -243,7 +246,7 @@ class ProgressBar {
 
 let ContractList: ContractsList = new ContractsList();
 let StundenzettelList: StundenZettel[] = [];
-let validatedSZList: StundenZettel[] = [];
+let ValidatedSZList: StundenZettel[] = [];
 
 let holidayLibrary: HolidayLibrary;
 
@@ -282,7 +285,9 @@ async function handleSZListInput(list: File[]) {
   progressBarSZListRead.initProgressBar();
   progressBarSZListRead.addItems(list.length);
 
-  let tokenizedTextList: string[][] = await readSZFiles(list);
+  let tokenizedTextList: { raw: Pdf; text: string[] }[] = await readSZFiles(
+    list,
+  );
 
   progressBarSZListParse.initProgressBar();
   progressBarSZListParse.addItems(tokenizedTextList.length);
@@ -300,7 +305,7 @@ async function readSZFiles(list: File[]) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     '//mozilla.github.io/pdf.js/build/pdf.worker.js';
 
-  const pageTextsResultList: string[][] = [];
+  const pageTextsResultList: { raw: Pdf; text: string[] }[] = [];
 
   for (let sz of list) {
     try {
@@ -308,15 +313,15 @@ async function readSZFiles(list: File[]) {
       const pdf: Pdf = await pdfjsLib.getDocument({ data }).promise;
       const maxPages = pdf.numPages;
       for (let pageNo = 1; pageNo <= maxPages; pageNo++) {
-        let text = await getPageText(pdf, pageNo).then(async (res) => {
+        let { raw, text } = await getPageText(pdf, pageNo).then(async (res) => {
           await progressBarSZListRead.updateProgress();
-          return res;
+          return { raw: pdf, text: res };
         });
         if (!(text.length > 1)) {
           console.log('couldnt read that shit');
           displaySZonCanvas(pdf, sz.name, sz.lastModified);
         } else {
-          pageTextsResultList.push(text);
+          pageTextsResultList.push({ raw, text });
         }
       }
     } catch (e) {
@@ -335,11 +340,14 @@ const getPageText = async (pdf: Pdf, pageNo: number): Promise<string[]> => {
   return pageText;
 };
 
-async function parseTokenizedText(list: string[][]): Promise<StundenZettel[]> {
-  return list.map((tokenList) => {
+async function parseTokenizedText(
+  list: { raw: Pdf; text: string[] }[],
+): Promise<StundenZettel[]> {
+  return list.map(({ raw, text: tokenList }) => {
     if (tokenList.length > 0) {
       let header = tokenList.slice(0, 10);
       let sz: StundenZettel = new StundenZettel(
+        raw,
         header[5], // firstName
         header[1], // lastName
         header[9], // bDate
@@ -397,7 +405,7 @@ async function handleValidation() {
     progressBarValidation.initProgressBar();
     progressBarValidation.addItems(StundenzettelList.length);
   }
-  if (validatedSZList != StundenzettelList) {
+  if (ValidatedSZList != StundenzettelList) {
     try {
       for (const sz of StundenzettelList) {
         validationPromises.push(
@@ -406,7 +414,7 @@ async function handleValidation() {
           }),
         );
       }
-      validatedSZList = StundenzettelList;
+      ValidatedSZList = StundenzettelList;
     } catch (err) {
       console.log(err);
     }
@@ -458,7 +466,7 @@ async function validate(sz: StundenZettel) {
   }
 }
 
-function renderResultTable() {
+async function renderResultTable() {
   let table: HTMLTableElement = document.getElementById(
     'table',
   ) as HTMLTableElement;
@@ -504,6 +512,135 @@ function renderResultTable() {
       console.log(error);
     }
   }
+}
+
+function renderSignatureCheck() {
+  const targetCarouselDif: HTMLDivElement = document.getElementById(
+    'carousel-parent',
+  ) as HTMLDivElement;
+  const carouselIndicator: HTMLOListElement = document.createElement(
+    'OL',
+  ) as HTMLOListElement;
+  const carouselInner: HTMLDivElement = document.createElement(
+    'DIV',
+  ) as HTMLDivElement;
+
+  carouselIndicator.classList.add('carousel-indicators');
+  carouselInner.classList.add('carousel-inner');
+
+  targetCarouselDif.appendChild(carouselIndicator);
+  targetCarouselDif.appendChild(carouselInner);
+
+  for (let i = 0; i < ValidatedSZList.length; i++) {
+    let indicatorLi: HTMLElement = document.createElement('li');
+    indicatorLi.ariaLabel = 'SZ Signature Slide ' + (i + 1).toString();
+    indicatorLi.setAttribute('data-target', '#carousel-parent');
+    indicatorLi.setAttribute('data-slide-to', i.toString());
+
+    if (i === 0) {
+      indicatorLi.classList.add('active');
+    }
+
+    carouselIndicator.appendChild(indicatorLi);
+
+    let carouselItemDiv: HTMLDivElement = document.createElement('div');
+    carouselItemDiv.classList.add('carousel-item');
+    if (i === 0) {
+      carouselItemDiv.classList.add('active');
+    }
+
+    carouselInner.appendChild(carouselItemDiv);
+
+    const canvas: HTMLCanvasElement = document.createElement('canvas');
+    carouselItemDiv.appendChild(canvas);
+
+    let raw = ValidatedSZList[i].raw;
+    raw.getPage(1).then((page) => {
+      let canvasContext = canvas.getContext('2d');
+      const scale = 1; // todo
+      const viewport = page.getViewport({ scale });
+      canvas.height = viewport.height; //todo
+      canvas.width = viewport.width; //todo
+      let data = [];
+
+      let task = page.render({ canvasContext, viewport });
+
+      task.promise.then(() => {
+        data.push(canvas.toDataURL('image/jpg'));
+        for (const d of data) {
+          // console.log(d);
+        }
+      });
+    });
+  }
+
+  const controlBtnPrev: HTMLButtonElement = document.createElement(
+    'BUTTON',
+  ) as HTMLButtonElement;
+  const controlBtnNext: HTMLButtonElement = document.createElement(
+    'BUTTON',
+  ) as HTMLButtonElement;
+  const iconSpanPrev: HTMLSpanElement = document.createElement(
+    'SPAN',
+  ) as HTMLSpanElement;
+  const textSpanPrev: HTMLSpanElement = document.createElement(
+    'SPAN',
+  ) as HTMLSpanElement;
+  const textSpanNext: HTMLSpanElement = document.createElement(
+    'SPAN',
+  ) as HTMLSpanElement;
+  const iconSpanNext: HTMLSpanElement = document.createElement(
+    'SPAN',
+  ) as HTMLSpanElement;
+
+  iconSpanPrev.classList.add('carousel-control-prev-icon');
+  iconSpanPrev.ariaHidden = 'true';
+  textSpanPrev.classList.add('sr-only');
+  textSpanPrev.innerText = 'Previous';
+
+  controlBtnPrev.classList.add('carousel-control-prev');
+  controlBtnPrev.type = 'button';
+  controlBtnPrev.setAttribute('data-target', '#carousel-parent');
+  controlBtnPrev.setAttribute('data-slide', 'prev');
+
+  controlBtnPrev.appendChild(iconSpanPrev);
+  controlBtnPrev.appendChild(textSpanPrev);
+
+  iconSpanNext.classList.add('carousel-control-next-icon');
+  iconSpanNext.ariaHidden = 'true';
+  textSpanNext.classList.add('sr-only');
+  textSpanNext.innerText = 'Next';
+
+  controlBtnNext.classList.add('carousel-control-next');
+  controlBtnNext.type = 'button';
+  controlBtnNext.setAttribute('data-target', '#carousel-parent');
+  controlBtnNext.setAttribute('data-slide', 'next');
+  controlBtnNext.appendChild(iconSpanNext);
+  controlBtnNext.appendChild(textSpanNext);
+
+  targetCarouselDif.appendChild(controlBtnPrev);
+  targetCarouselDif.appendChild(controlBtnNext);
+
+  //   targetCarouselDif.innerHTML =
+  //     targetCarouselDif.innerHTML +
+  //     `<button
+  //   class="carousel-control-prev"
+  //   type="button"
+  //   data-target="#carousel-parent"
+  //   data-slide="prev"
+  // >
+  //   <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+  //   <span class="sr-only">Previous</span>
+  // </button>
+  // <button
+  //   class="carousel-control-next"
+  //   type="button"
+  //   data-target="#carousel-parent"
+  //   data-slide="next"
+  // >
+  //   <span class="carousel-control-next-icon" aria-hidden="true"></span>
+  //   <span class="sr-only">Next</span>
+  // </button>`;
 }
 
 // name is the name of the file and the id is the unix timestamp of the file
@@ -636,8 +773,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   validateBtn.addEventListener('click', async () => {
-    await handleValidation().then(() => {
-      renderResultTable();
+    await handleValidation().then(async () => {
+      renderResultTable().then(() => {
+        renderSignatureCheck();
+      });
     });
   });
 
