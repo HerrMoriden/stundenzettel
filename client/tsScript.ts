@@ -557,10 +557,17 @@ async function renderSignatureCheck() {
 
   for (let i = 0; i < ValidatedSZList.length; i++) {
     let carouselItemDiv: HTMLDivElement = document.createElement('div');
+    carouselItemDiv.setAttribute('data-target', i.toString());
     carouselItemDiv.classList.add('carousel-item');
     if (i === 0) {
       carouselItemDiv.classList.add('active');
     }
+
+    carouselItemDiv.addEventListener('click', (target) => {
+      console.log(target);
+
+      alert('hallo popo');
+    });
 
     carouselInner.appendChild(carouselItemDiv);
 
