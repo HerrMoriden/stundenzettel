@@ -75,6 +75,12 @@ canvas {
   }
 }
 
+#startValidationButton {
+  height: 10vh;
+  width: 15vh;
+  font-size: 2rem;
+}
+
 #progress-bar-target-diff {
   border-radius: 1rem 1rem;
   margin: 2rem;
@@ -178,7 +184,7 @@ canvas {
   align-items: center;
   flex-direction: column;
 }
- /* modal wrapper div */
+/* modal wrapper div */
 .modalwrapper.wrapper {
   background-color: rgb(255, 131, 0);
   height: fit-content;
@@ -228,6 +234,17 @@ canvas {
   flex-direction: row;
   justify-content: space-between;
   position: absolute;
+}
+
+.selected::after {
+  content: '';
+  height: 100%;
+  width: 70%;
+  background-color: red;
+  position: absolute;
+  left: 15%;
+  z-index: 12;
+  opacity: 0.3;
 }
 
 .carousel-item.active {

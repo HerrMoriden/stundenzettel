@@ -467,7 +467,7 @@ async function validate(sz: StundenZettel) {
   }
 }
 
-async function renderResultTable() {
+async function renderResultTable(szList: StundenZettel[] = StundenzettelList) {
   let table: HTMLTableElement = document.getElementById(
     'table',
   ) as HTMLTableElement;
@@ -475,10 +475,11 @@ async function renderResultTable() {
   const tHead = table.createTHead();
   const tableHeadColNames = ['Fist Name', 'Name', 'Month', 'Valid'];
 
-  tBody.innerHTML = '';
+  tBody.innerHTML = null;
+  tBody.innerText = null;
 
   // todo sz object keys are a little more now than needed
-  for (const sz of StundenzettelList) {
+  for (const sz of szList) {
     try {
       if (tHead.rows.length === 0) {
         // fill table head
@@ -557,7 +558,9 @@ async function renderSignatureCheck() {
   targetCarouselDif.appendChild(carouselInner);
 
   for (let i = 0; i < ValidatedSZList.length; i++) {
+    let sz: StundenZettel = ValidatedSZList[i];
     let carouselItemDiv: HTMLDivElement = document.createElement('div');
+
     carouselItemDiv.setAttribute('data-target', i.toString());
     carouselItemDiv.classList.add('carousel-item');
     if (i === 0) {
@@ -566,8 +569,14 @@ async function renderSignatureCheck() {
 
     carouselItemDiv.addEventListener('click', (target) => {
       console.log(target);
-
-      alert('hallo popo');
+      console.log(sz.fName);
+      console.log(ValidatedSZList.length);
+      ValidatedSZList = ValidatedSZList.filter((otherSz: StundenZettel) => {
+        return sz.raw !== otherSz.raw;
+      });
+      console.log(ValidatedSZList.length);
+      carouselItemDiv.classList.add('selected')
+      renderResultTable(ValidatedSZList);
     });
 
     carouselInner.appendChild(carouselItemDiv);
@@ -576,11 +585,7 @@ async function renderSignatureCheck() {
     coverupDivLeft.classList.add('coverup');
     carouselItemDiv.appendChild(coverupDivLeft);
 
-    let canvas = await renderPdfOnCanvas(
-      carouselItemDiv,
-      ValidatedSZList[i].raw,
-      3,
-    );
+    let canvas = await renderPdfOnCanvas(carouselItemDiv, sz.raw, 3);
     canvas.setAttribute(
       'style',
       'top: ' +
