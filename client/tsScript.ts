@@ -319,7 +319,7 @@ async function readSZFiles(list: File[]) {
         });
         if (!(text.length > 1)) {
           console.log('couldnt read that shit');
-          displaySZonCanvas(pdf, sz.name, sz.lastModified);
+          handleManualChecking(pdf, sz.name, sz.lastModified);
         } else {
           pageTextsResultList.push({ raw, text });
         }
@@ -514,35 +514,48 @@ async function renderResultTable() {
   }
 }
 
-function renderSignatureCheck() {
+// type == 'prev' || 'next'
+const createCarouselControlButton = (type: string) => {
+  const controlBtn: HTMLButtonElement = document.createElement(
+    'BUTTON',
+  ) as HTMLButtonElement;
+  const iconSpan: HTMLSpanElement = document.createElement(
+    'SPAN',
+  ) as HTMLSpanElement;
+  const textSpan: HTMLSpanElement = document.createElement(
+    'SPAN',
+  ) as HTMLSpanElement;
+
+  iconSpan.classList.add('carousel-control-' + type + '-icon');
+  iconSpan.ariaHidden = 'true';
+  textSpan.classList.add('sr-only');
+  textSpan.innerText = type === 'prev' ? 'Previous' : 'Next';
+
+  controlBtn.classList.add('carousel-control-' + type);
+  controlBtn.type = 'button';
+  controlBtn.setAttribute('data-target', '#carousel-parent');
+  controlBtn.setAttribute('data-slide', type);
+
+  controlBtn.appendChild(iconSpan);
+  controlBtn.appendChild(textSpan);
+
+  return controlBtn;
+};
+
+async function renderSignatureCheck() {
   const targetCarouselDif: HTMLDivElement = document.getElementById(
     'carousel-parent',
   ) as HTMLDivElement;
-  const carouselIndicator: HTMLOListElement = document.createElement(
-    'OL',
-  ) as HTMLOListElement;
+
   const carouselInner: HTMLDivElement = document.createElement(
     'DIV',
   ) as HTMLDivElement;
 
-  carouselIndicator.classList.add('carousel-indicators');
   carouselInner.classList.add('carousel-inner');
 
-  targetCarouselDif.appendChild(carouselIndicator);
   targetCarouselDif.appendChild(carouselInner);
 
   for (let i = 0; i < ValidatedSZList.length; i++) {
-    let indicatorLi: HTMLElement = document.createElement('li');
-    indicatorLi.ariaLabel = 'SZ Signature Slide ' + (i + 1).toString();
-    indicatorLi.setAttribute('data-target', '#carousel-parent');
-    indicatorLi.setAttribute('data-slide-to', i.toString());
-
-    if (i === 0) {
-      indicatorLi.classList.add('active');
-    }
-
-    carouselIndicator.appendChild(indicatorLi);
-
     let carouselItemDiv: HTMLDivElement = document.createElement('div');
     carouselItemDiv.classList.add('carousel-item');
     if (i === 0) {
@@ -551,109 +564,44 @@ function renderSignatureCheck() {
 
     carouselInner.appendChild(carouselItemDiv);
 
-    const canvas: HTMLCanvasElement = document.createElement('canvas');
-    carouselItemDiv.appendChild(canvas);
+    let coverupDivLeft: HTMLDivElement = document.createElement('div');
+    coverupDivLeft.classList.add('coverup');
+    carouselItemDiv.appendChild(coverupDivLeft);
 
-    let raw = ValidatedSZList[i].raw;
-    raw.getPage(1).then((page) => {
-      let canvasContext = canvas.getContext('2d');
-      const scale = 1; // todo
-      const viewport = page.getViewport({ scale });
-      canvas.height = viewport.height; //todo
-      canvas.width = viewport.width; //todo
-      let data = [];
+    let canvas = await renderPdfOnCanvas(
+      carouselItemDiv,
+      ValidatedSZList[i].raw,
+    );
+    canvas.setAttribute(
+      'style',
+      'top: ' +
+        (-canvas.height * 0.8).toString() +
+        'px;' +
+        'left: ' +
+        (canvas.width * 0.3).toString() +
+        'px;',
+    );
 
-      let task = page.render({ canvasContext, viewport });
-
-      task.promise.then(() => {
-        data.push(canvas.toDataURL('image/jpg'));
-        for (const d of data) {
-          // console.log(d);
-        }
-      });
-    });
+    let coverupDivRight: HTMLDivElement = document.createElement('div');
+    coverupDivRight.classList.add('coverup');
+    carouselItemDiv.appendChild(coverupDivRight);
   }
 
-  const controlBtnPrev: HTMLButtonElement = document.createElement(
-    'BUTTON',
-  ) as HTMLButtonElement;
-  const controlBtnNext: HTMLButtonElement = document.createElement(
-    'BUTTON',
-  ) as HTMLButtonElement;
-  const iconSpanPrev: HTMLSpanElement = document.createElement(
-    'SPAN',
-  ) as HTMLSpanElement;
-  const textSpanPrev: HTMLSpanElement = document.createElement(
-    'SPAN',
-  ) as HTMLSpanElement;
-  const textSpanNext: HTMLSpanElement = document.createElement(
-    'SPAN',
-  ) as HTMLSpanElement;
-  const iconSpanNext: HTMLSpanElement = document.createElement(
-    'SPAN',
-  ) as HTMLSpanElement;
-
-  iconSpanPrev.classList.add('carousel-control-prev-icon');
-  iconSpanPrev.ariaHidden = 'true';
-  textSpanPrev.classList.add('sr-only');
-  textSpanPrev.innerText = 'Previous';
-
-  controlBtnPrev.classList.add('carousel-control-prev');
-  controlBtnPrev.type = 'button';
-  controlBtnPrev.setAttribute('data-target', '#carousel-parent');
-  controlBtnPrev.setAttribute('data-slide', 'prev');
-
-  controlBtnPrev.appendChild(iconSpanPrev);
-  controlBtnPrev.appendChild(textSpanPrev);
-
-  iconSpanNext.classList.add('carousel-control-next-icon');
-  iconSpanNext.ariaHidden = 'true';
-  textSpanNext.classList.add('sr-only');
-  textSpanNext.innerText = 'Next';
-
-  controlBtnNext.classList.add('carousel-control-next');
-  controlBtnNext.type = 'button';
-  controlBtnNext.setAttribute('data-target', '#carousel-parent');
-  controlBtnNext.setAttribute('data-slide', 'next');
-  controlBtnNext.appendChild(iconSpanNext);
-  controlBtnNext.appendChild(textSpanNext);
-
-  targetCarouselDif.appendChild(controlBtnPrev);
-  targetCarouselDif.appendChild(controlBtnNext);
-
-  //   targetCarouselDif.innerHTML =
-  //     targetCarouselDif.innerHTML +
-  //     `<button
-  //   class="carousel-control-prev"
-  //   type="button"
-  //   data-target="#carousel-parent"
-  //   data-slide="prev"
-  // >
-  //   <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-  //   <span class="sr-only">Previous</span>
-  // </button>
-  // <button
-  //   class="carousel-control-next"
-  //   type="button"
-  //   data-target="#carousel-parent"
-  //   data-slide="next"
-  // >
-  //   <span class="carousel-control-next-icon" aria-hidden="true"></span>
-  //   <span class="sr-only">Next</span>
-  // </button>`;
+  targetCarouselDif.appendChild(createCarouselControlButton('prev'));
+  targetCarouselDif.appendChild(createCarouselControlButton('next'));
 }
 
 // name is the name of the file and the id is the unix timestamp of the file
 // should be unique enough for this
-function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
-  console.log(pdf);
-
+async function handleManualChecking(
+  pdf: Pdf,
+  cardHeaderText: string,
+  pdfId: number,
+) {
   const targetParentDifId: string = 'modals';
   const targetParentDif: HTMLDivElement = document.getElementById(
     targetParentDifId,
   ) as HTMLDivElement;
-
-  const canvas: HTMLCanvasElement = document.createElement('canvas');
 
   const cardHeader: string = `
   <div class="card-header" id=heading-${pdfId}>
@@ -702,25 +650,28 @@ function displaySZonCanvas(pdf: Pdf, cardHeaderText: string, pdfId: number) {
     'modal-body-' + pdfId,
   ) as HTMLDivElement;
 
-  cardBodyEl.appendChild(canvas);
+  await renderPdfOnCanvas(cardBodyEl, pdf);
+}
 
-  pdf.getPage(1).then((page) => {
-    let canvasContext = canvas.getContext('2d');
-    const scale = 1; // todo
-    const viewport = page.getViewport({ scale });
-    canvas.height = viewport.height; //todo
-    canvas.width = viewport.width; //todo
-    let data = [];
+async function renderPdfOnCanvas(appendEl: HTMLElement, pdf: Pdf) {
+  const canvas: HTMLCanvasElement = document.createElement('canvas');
 
-    let task = page.render({ canvasContext, viewport });
+  appendEl.appendChild(canvas);
+  let canvasContext = canvas.getContext('2d');
+  let page = await pdf.getPage(1);
+  const scale = 1;
 
-    task.promise.then(() => {
-      data.push(canvas.toDataURL('image/jpg'));
-      for (const d of data) {
-        // console.log(d);
-      }
-    });
-  });
+  const viewport = page.getViewport({ scale });
+  canvas.height = viewport.height;
+  canvas.width = viewport.width;
+
+  // let task = await page.render({ canvasContext, viewport });
+  // let data = [];
+  // data.push(canvas.toDataURL('image/jpeg')); // this would get the data as "jpeg string"
+
+  await page.render({ canvasContext, viewport });
+
+  return canvas;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -162,21 +162,62 @@ canvas {
 }
 
 #carousel-wrapper {
-    height: 80%;
-    width: 80%;
+  border-radius: 10px 10px;
+  margin: 2rem;
+  background-color: #e1e1e1;
+  height: 50vh;
+  width: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#carousel-description {
+  justify-content: center;
+  margin: 1rem;
+  padding: 3rem;
 }
 
 #carousel-parent {
-  width: 100%;
+  height: 80%;
+  width: 90%;
+}
+
+#carousel-parent > button {
+  height: 80%;
+  background-color: rgb(255, 131, 0);
+}
+
+.carousel-indicators {
   height: 2rem;
+  bottom: -30px;
+}
+.carousel-indicators > li {
+  height: 40%;
+  background-color: #242424;
 }
 
 .carousel-inner {
-  height: 100%;
+  height: 80%;
   width: 100%;
 }
 
-.carousel-item > canvas {
-    top: -730px;
+.carousel-item {
+  height: 100%;
+  display: flex !important;
+  flex-direction: row;
+  justify-content: space-around;
+  position: absolute;
+}
 
+.carousel-item.active {
+  z-index: 10;
+}
+
+div.coverup {
+  height: 100%;
+  width: 30%;
+  z-index: 1;
+  background-color: #e1e1e1;
 }
