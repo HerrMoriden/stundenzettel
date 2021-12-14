@@ -51,7 +51,7 @@
         <hr class="my-4" />
       </div>
 
-      <div class="input-group flex-nowrap justify-content-center">
+      <div class="input-group flex-nowrap wrapper">
         <div>
           <label for="uploadInputList"
             >Liste der Tutor:innen und ihrer Stunden</label
@@ -84,7 +84,9 @@
       </div>
 
       <!-- PROGRESS BARS -->
-      <div id="progress-bar-target-diff"></div>
+      <div class="prog-bar">
+        <div id="progress-bar-target-diff"></div>
+      </div>
 
       <div class="flex-nowrap justify-content-center" style="padding: 2rem">
         <div>
@@ -99,21 +101,31 @@
       </div>
 
       <!-- MANUAL CHECKING -->
-      <div id="modals"></div>
-
-      <!-- RESULT TABLE -->
-      <div class="flex-nowrap">
-        <table id="table">
-          <tbody id="tBody"></tbody>
-        </table>
+      <div class="modalwrapper">
+        <div id="modal-description" hidden>
+          <h2>Manual Checking</h2>
+          <h6>[Click for view]</h6>
+        </div>
+        <div id="modals"></div>
       </div>
 
-      <div id="carousel-wrapper">
+      <div class="carousel wrapper">
         <div id="carousel-description">
-          <h5>Hier sind alle eingelesenen Stundenzettel zur manuellen Überprüfung der Unterschriften.</h5>
-          <p>[Stundenzettel anklicken um diesen als "nicht signiert" zu markieren.]</p>
+          <h5>
+            Hier sind alle eingelesenen Stundenzettel zur manuellen Überprüfung
+            der Unterschriften.
+          </h5>
+          <p>
+            [Stundenzettel anklicken um diesen als "nicht signiert" zu
+            markieren.]
+          </p>
         </div>
-        <div id="carousel-parent" class="carousel slide" data-ride="carousel">
+        <div
+          id="carousel-parent"
+          class="carousel"
+          data-ride="carousel"
+          data-interval="false"
+        >
           <!-- <div class="carousel-indicators">
           <button
             type="button"
@@ -148,6 +160,12 @@
           </div>
         </div> -->
         </div>
+      </div>
+      <!-- RESULT TABLE -->
+      <div class="flex-nowrap">
+        <table id="table">
+          <tbody id="tBody"></tbody>
+        </table>
       </div>
     </div>
   </body>

@@ -53,11 +53,6 @@ canvas {
 }
 
 .blob {
-  /*border-radius: 50%;*/
-  /*margin: 10px;*/
-  /*height: 20px;*/
-  /*width: 20px;*/
-
   box-shadow: 0 0 0 0 rgba(0, 0, 0, 1);
   transform: scale(1);
   animation: pulse 2s infinite;
@@ -81,12 +76,13 @@ canvas {
 }
 
 #progress-bar-target-diff {
+  border-radius: 1rem 1rem;
   margin: 2rem;
   margin-top: 0.7rem;
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  height: 10%;
+  height: fit-content;
   width: 80%;
   align-items: center;
   align-content: flex-start;
@@ -123,27 +119,31 @@ canvas {
 }
 
 #modals {
+  width: 80%;
+  height: 100%;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
   flex-wrap: wrap;
   justify-content: flex-start;
   align-items: stretch;
   align-content: space-around;
-  width: 80%;
 }
 
 .card {
-  width: 50%;
-  height: 5rem;
+  width: 80%;
+  height: 80%;
   align-items: center;
   margin: 0.7rem;
   justify-content: center;
+  border-radius: 1rem 1rem;
 }
 
 .card > .card-header {
   display: flex;
-  width: 100%;
+  width: 80%;
   justify-content: center;
+  border-radius: 1rem 1rem;
 }
 
 .modal-dialog {
@@ -161,16 +161,34 @@ canvas {
   align-items: center;
 }
 
-#carousel-wrapper {
-  border-radius: 10px 10px;
+#modal-description {
+  padding: 1rem;
+  padding-top: 2rem;
+}
+
+.wrapper {
+  border-radius: 1rem 1rem;
   margin: 2rem;
-  background-color: #e1e1e1;
+  background-color: #8ec5fc;
+  background-image: linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 90%);
   height: 50vh;
   width: 90%;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+}
+ /* modal wrapper div */
+.modalwrapper.wrapper {
+  background-color: rgb(255, 131, 0);
+  height: fit-content;
+}
+
+.input-group.wrapper {
+  width: 60%;
+  height: 20vh;
+  flex-direction: row;
+  justify-content: space-evenly;
 }
 
 #carousel-description {
@@ -187,6 +205,7 @@ canvas {
 #carousel-parent > button {
   height: 80%;
   background-color: rgb(255, 131, 0);
+  z-index: 10;
 }
 
 .carousel-indicators {
@@ -207,7 +226,7 @@ canvas {
   height: 100%;
   display: flex !important;
   flex-direction: row;
-  justify-content: space-around;
+  justify-content: space-between;
   position: absolute;
 }
 

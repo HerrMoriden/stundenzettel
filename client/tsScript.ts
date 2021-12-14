@@ -176,6 +176,7 @@ class ProgressBar {
 
   initProgressBar(): void {
     this.targetDiff.classList.add('progress');
+    this.targetDiff.parentElement.classList.add('wrapper');
 
     let progEl: string = `<div class="progress-bar-container">
         <label
@@ -578,14 +579,15 @@ async function renderSignatureCheck() {
     let canvas = await renderPdfOnCanvas(
       carouselItemDiv,
       ValidatedSZList[i].raw,
+      3,
     );
     canvas.setAttribute(
       'style',
       'top: ' +
         (-canvas.height * 0.8).toString() +
         'px;' +
-        'left: ' +
-        (canvas.width * 0.3).toString() +
+        'right: ' +
+        (canvas.width * 0.1).toString() +
         'px;',
     );
 
@@ -609,6 +611,11 @@ async function handleManualChecking(
   const targetParentDif: HTMLDivElement = document.getElementById(
     targetParentDifId,
   ) as HTMLDivElement;
+  const discriptionDiv: HTMLDivElement = document.getElementById(
+    'modal-description',
+  ) as HTMLDivElement;
+  discriptionDiv.removeAttribute('hidden');
+  targetParentDif.parentElement.classList.add('wrapper');
 
   const cardHeader: string = `
   <div class="card-header" id=heading-${pdfId}>
@@ -660,13 +667,17 @@ async function handleManualChecking(
   await renderPdfOnCanvas(cardBodyEl, pdf);
 }
 
-async function renderPdfOnCanvas(appendEl: HTMLElement, pdf: Pdf) {
+async function renderPdfOnCanvas(
+  appendEl: HTMLElement,
+  pdf: Pdf,
+  scale: number = 1,
+) {
   const canvas: HTMLCanvasElement = document.createElement('canvas');
+  console.log(scale);
 
   appendEl.appendChild(canvas);
   let canvasContext = canvas.getContext('2d');
   let page = await pdf.getPage(1);
-  const scale = 1;
 
   const viewport = page.getViewport({ scale });
   canvas.height = viewport.height;
