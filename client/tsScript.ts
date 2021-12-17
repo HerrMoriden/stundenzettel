@@ -324,7 +324,6 @@ async function readSZFiles(list: File[]) {
           return { raw: pdf, text: res };
         });
         if (!(text.length > 1)) {
-          console.log('couldnt read that shit');
           handleManualChecking(pdf, sz.name, sz.lastModified);
         } else {
           pageTextsResultList.push({ raw, text });
@@ -334,7 +333,6 @@ async function readSZFiles(list: File[]) {
       console.error(e);
     }
   }
-  console.log(pageTextsResultList.length);
   return pageTextsResultList;
 }
 
@@ -581,31 +579,19 @@ async function renderSignatureCheck() {
 
     carouselInner.appendChild(carouselItemDiv);
 
-    const parentElWidth = carouselItemDiv.offsetWidth;
     const scale = 1.5;
 
     let coverupDivLeft: HTMLDivElement = document.createElement('div');
     coverupDivLeft.classList.add('coverup');
     carouselItemDiv.appendChild(coverupDivLeft);
 
-    const widthOfView = parentElWidth - 2 * coverupDivLeft.offsetWidth;
+    let canvas = await renderPdfOnCanvas(carouselItemDiv, sz.raw, 3);
 
-    let canvas = await renderPdfOnCanvas(carouselItemDiv, sz.raw, scale);
-
-    // canvas.setAttribute(
-    //   'style',
-    //   'top: ' +
-    //     (canvas.height * -0.8).toString() +
-    //     'px;' +
-    //     'right: ' +
-    //     (canvas.width * 0.3).toString() +
-    //     'px;',
-    // );
     canvas.setAttribute(
       'style',
       'bottom: 0;' +
         'right: ' +
-        (carouselItemDiv.offsetWidth / 2 - canvas.width * 0.3).toString() +
+        (carouselItemDiv.offsetWidth / 2 - canvas.width * 0.25).toString() +
         'px;',
     );
 
@@ -691,8 +677,6 @@ async function renderPdfOnCanvas(
   scale: number = 1,
 ) {
   const canvas: HTMLCanvasElement = document.createElement('canvas');
-  console.log(scale);
-
   appendEl.appendChild(canvas);
   let canvasContext = canvas.getContext('2d');
   let page = await pdf.getPage(1);
@@ -758,7 +742,6 @@ document.addEventListener('DOMContentLoaded', () => {
         szInput.files.length < 1 ? [].concat(szInput.files)[0] : szInput.files;
 
       await handleSZListInput(temp).then(() => {
-        console.log(StundenzettelList);
         enableValidation();
       });
     }
