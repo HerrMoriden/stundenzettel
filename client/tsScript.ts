@@ -573,28 +573,39 @@ async function renderSignatureCheck() {
     }
 
     carouselItemDiv.addEventListener('click', (target) => {
-      console.log(target);
-      console.log(sz.fName);
       ValidatedSZList[i].markUnsigned();
 
-      carouselItemDiv.classList.add('selected')
+      carouselItemDiv.classList.add('selected');
       renderResultTable(ValidatedSZList);
     });
 
     carouselInner.appendChild(carouselItemDiv);
 
+    const parentElWidth = carouselItemDiv.offsetWidth;
+    const scale = 1.5;
+
     let coverupDivLeft: HTMLDivElement = document.createElement('div');
     coverupDivLeft.classList.add('coverup');
     carouselItemDiv.appendChild(coverupDivLeft);
 
-    let canvas = await renderPdfOnCanvas(carouselItemDiv, sz.raw, 3);
+    const widthOfView = parentElWidth - 2 * coverupDivLeft.offsetWidth;
+
+    let canvas = await renderPdfOnCanvas(carouselItemDiv, sz.raw, scale);
+
+    // canvas.setAttribute(
+    //   'style',
+    //   'top: ' +
+    //     (canvas.height * -0.8).toString() +
+    //     'px;' +
+    //     'right: ' +
+    //     (canvas.width * 0.3).toString() +
+    //     'px;',
+    // );
     canvas.setAttribute(
       'style',
-      'top: ' +
-        (-canvas.height * 0.8).toString() +
-        'px;' +
+      'bottom: 0;' +
         'right: ' +
-        (canvas.width * 0.1).toString() +
+        (carouselItemDiv.offsetWidth / 2 - canvas.width * 0.3).toString() +
         'px;',
     );
 
@@ -706,7 +717,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const contractsInput: HTMLInputElement = document.getElementById(
     'uploadInputList',
   ) as HTMLInputElement;
-  const validateBtn = document.getElementById('startValidationButton');
+  const validateBtn: HTMLButtonElement = document.getElementById(
+    'startValidationButton',
+  ) as HTMLButtonElement;
+  const scrollBtn: HTMLButtonElement = document.getElementById(
+    'scrollArrow',
+  ) as HTMLButtonElement;
 
   // initialize Holiday library
   holidayLibrary = globalThis.holiday;
@@ -749,11 +765,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   validateBtn.addEventListener('click', async () => {
-    await handleValidation().then(async () => {
-      renderResultTable().then(() => {
-        renderSignatureCheck();
+    if (szInput.files.length > 0) {
+      await handleValidation().then(async () => {
+        renderResultTable().then(() => {
+          renderSignatureCheck();
+          showScrollButton();
+        });
       });
-    });
+    }
+  });
+
+  scrollBtn.addEventListener('click', () => {
+    window.scroll(0, window.outerHeight);
   });
 
   function enableValidation() {
@@ -769,6 +792,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function disableValidation() {
     validateBtn.classList.remove('blob');
     validateBtn.classList.add('disabled');
+  }
+
+  function showScrollButton() {
+    scrollBtn.removeAttribute('hidden');
+    scrollBtn.removeAttribute('disabled');
   }
 });
 
