@@ -75,10 +75,27 @@ canvas {
   }
 }
 
+.jumbotron {
+  animation: colorChange 10s infinite;
+}
+
+@keyframes colorChange {
+  0% {
+    filter: hue-rotate(0deg);
+  }
+  50% {
+    filter: hue-rotate(359deg);
+  }
+  100% {
+    filter: hue-rotate(0deg);
+  }
+}
+
 #startValidationButton {
   height: 10vh;
   width: 15vh;
   font-size: 2rem;
+  background-color: rgb(142 197 252);
 }
 
 #progress-bar-target-diff {
@@ -178,16 +195,17 @@ canvas {
 
 .wrapper {
   border-radius: 1rem 1rem;
-  margin: 2rem;
+  margin: 2rem auto;
   background-color: #8ec5fc;
   background-image: linear-gradient(90deg, #e0c3fc 0%, #8ec5fc 90%);
-  height: 50vh;
+  height: fit-content;
   width: 90%;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
 }
+
 /* modal wrapper div */
 .modalwrapper.wrapper {
   background-color: rgb(255, 131, 0);
@@ -196,9 +214,17 @@ canvas {
 
 .input-group.wrapper {
   width: 60%;
-  height: 20vh;
+  height: fit-content;
+  padding: 2rem 1rem;
+  margin: 3rem auto;
   flex-direction: row;
   justify-content: space-evenly;
+  filter: hue-rotate(-40deg);
+  box-shadow: 0rem 0rem 1rem 1rem;
+}
+
+.carousel.wrapper {
+  height: 50vh;
 }
 
 #carousel-description {

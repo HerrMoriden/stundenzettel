@@ -149,6 +149,11 @@ class StundenZettel {
     this.issues.push(issue);
     this.isValid = false;
   }
+
+  markUnsigned() {
+    this.isSigned = false;
+    this.isValid = false;
+  }
 }
 
 class ProgressBar {
@@ -570,14 +575,10 @@ async function renderSignatureCheck() {
     carouselItemDiv.addEventListener('click', (target) => {
       console.log(target);
       console.log(sz.fName);
-      console.log(ValidatedSZList.length);
-      ValidatedSZList = ValidatedSZList.filter((otherSz: StundenZettel) => {
-        return sz.raw !== otherSz.raw;
-      });
-      console.log(ValidatedSZList.length);
+      ValidatedSZList[i].markUnsigned();
+
       carouselItemDiv.classList.add('selected')
       renderResultTable(ValidatedSZList);
-
     });
 
     carouselInner.appendChild(carouselItemDiv);

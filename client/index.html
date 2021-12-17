@@ -49,52 +49,53 @@
         </div>
       </div>
 
-      <div class="input-group flex-nowrap wrapper">
-        <div>
-          <label for="uploadInputList"
-            >Stunden der Tutor:innen</label
-          >
-          <input
-            type="file"
-            id="uploadInputList"
-            multiple
-            class="form-control"
-            placeholder="upload Files"
-            aria-label="FilesUpload"
-            aria-describedby="addon-wrapping"
-          />
+      <div class="wrapper">
+        <div class="input-group flex-nowrap wrapper">
+          <div>
+            <label for="uploadInputList">Stunden der Tutor:innen</label>
+            <input
+              type="file"
+              id="uploadInputList"
+              multiple
+              class="form-control"
+              placeholder="upload Files"
+              aria-label="FilesUpload"
+              aria-describedby="addon-wrapping"
+            />
+          </div>
+          <div>
+            <label for="uploadInputSZ"
+              >Stundenzettel <small>(multi file upload)</small></label
+            >
+            <input
+              type="file"
+              id="uploadInputSZ"
+              webkitdirectory
+              directory
+              multiple
+              class="form-control"
+              placeholder="upload Files"
+              aria-label="FilesUpload"
+              aria-describedby="addon-wrapping"
+              disabled
+            />
+          </div>
         </div>
-        <div>
-          <label for="uploadInputSZ">Stundenzettel <small>(multi file upload)</small></label>
-          <input
-            type="file"
-            id="uploadInputSZ"
-            webkitdirectory
-            directory
-            multiple
-            class="form-control"
-            placeholder="upload Files"
-            aria-label="FilesUpload"
-            aria-describedby="addon-wrapping"
-            disabled
-          />
+        <!-- PROGRESS BARS -->
+        <div class="prog-bar">
+          <div id="progress-bar-target-diff"></div>
         </div>
-      </div>
 
-      <!-- PROGRESS BARS -->
-      <div class="prog-bar">
-        <div id="progress-bar-target-diff"></div>
-      </div>
-
-      <div class="flex-nowrap justify-content-center" style="padding: 2rem">
-        <div>
-          <button
-            class="btn btn-primary disabled"
-            type="button"
-            id="startValidationButton"
-          >
-            Validate
-          </button>
+        <div class="flex-nowrap justify-content-center" style="padding: 2rem">
+          <div>
+            <button
+              class="btn disabled"
+              type="button"
+              id="startValidationButton"
+            >
+              Validate
+            </button>
+          </div>
         </div>
       </div>
 
@@ -117,7 +118,6 @@
             [Stundenzettel anklicken um diesen als "nicht signiert" zu
             markieren.]
           </p>
-          
         </div>
         <div
           id="carousel-parent"
