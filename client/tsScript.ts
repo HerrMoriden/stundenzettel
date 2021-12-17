@@ -107,7 +107,7 @@ class StundenZettel {
   month: string;
   fBereich: string;
   rowEntries: RowEntry[];
-  gesamtstunden: number;
+  sumOfHours: number;
   isSigned: boolean;
   isValid: boolean;
   issues?: string[];
@@ -127,7 +127,7 @@ class StundenZettel {
     this.fBereich = fBereich;
     this.month = month;
     this.rowEntries = [];
-    this.gesamtstunden = -1;
+    this.sumOfHours = -1; // 'Gesamtstunden' auf dem SZ
     this.isSigned = false;
     this.isValid = true;
   }
@@ -379,7 +379,7 @@ async function parseTokenizedText(
           i += 3;
         }
       }
-      sz.gesamtstunden = tokenList.length
+      sz.sumOfHours = tokenList.length
         ? +tokenList[endOfTable + 1].slice(
             0,
             tokenList[endOfTable + 1].indexOf(':'),
@@ -447,7 +447,7 @@ async function validate(sz: StundenZettel) {
     // validation workHours = sum of worked hours
     let sumOfWorkHours = 0;
     sz.rowEntries.map((entry) => (sumOfWorkHours += entry.sum));
-    if (sumOfWorkHours !== sz.gesamtstunden) {
+    if (sumOfWorkHours !== sz.sumOfHours) {
       sz.addIssue(
         `Die Summe der einzelnen Einträge stimmt nicht mit den Gesamtstunden überein.`,
       );
@@ -458,10 +458,10 @@ async function validate(sz: StundenZettel) {
 
   try {
     // comparison workHours and contracted hours
-    if (sz.hours != sz.gesamtstunden) {
+    if (sz.hours != sz.sumOfHours) {
       let issueMsg: string =
         'Diesen Monat hat die Person zu ' +
-        (sz.hours > sz.gesamtstunden ? 'viel' : 'wenig') +
+        (sz.hours > sz.sumOfHours ? 'viel' : 'wenig') +
         ' gearbeitet.';
       sz.addIssue(issueMsg);
     }
@@ -562,14 +562,16 @@ async function renderSignatureCheck() {
 
   for (let i = 0; i < ValidatedSZList.length; i++) {
     let sz: StundenZettel = ValidatedSZList[i];
+
+    // create and style the item div (parent) for the canvas
     let carouselItemDiv: HTMLDivElement = document.createElement('div');
-
     carouselItemDiv.setAttribute('data-target', i.toString());
-    carouselItemDiv.classList.add('carousel-item');
-    if (i === 0) {
-      carouselItemDiv.classList.add('active');
-    }
+    carouselItemDiv.classList.add(
+      'carousel-item',
+      i == 0 ? 'active' : 'noClass', // cant pass empty string thats why "noClass"
+    );
 
+    // add clickeventhandler to Carouselitem to mark as unSigned
     carouselItemDiv.addEventListener('click', (target) => {
       ValidatedSZList[i].markUnsigned();
 
@@ -579,8 +581,17 @@ async function renderSignatureCheck() {
 
     carouselInner.appendChild(carouselItemDiv);
 
-    const scale = 1.5;
-
+    /**
+     * create the three elements for the carousel item div
+     * because and how the appending of elements work, we need to first append the left coverup
+     * then the canvas and the right coverup
+     *
+     * the parent element of the carousel item div is positioned relative where as the carousel item
+     * div is positioned absolute. To nicely see the signature in the middle of the carousel item div
+     * its given an bottom offset of 0 to fix it at the bottom and a offset of half the parents div
+     * offsetWidth (now the middle of the canvas would be in the middle of the parent div) - a quarter
+     * width of the canvas.
+     */
     let coverupDivLeft: HTMLDivElement = document.createElement('div');
     coverupDivLeft.classList.add('coverup');
     carouselItemDiv.appendChild(coverupDivLeft);
@@ -600,6 +611,7 @@ async function renderSignatureCheck() {
     carouselItemDiv.appendChild(coverupDivRight);
   }
 
+  // append control buttons last
   targetCarouselDif.appendChild(createCarouselControlButton('prev'));
   targetCarouselDif.appendChild(createCarouselControlButton('next'));
 }
@@ -611,14 +623,15 @@ async function handleManualChecking(
   cardHeaderText: string,
   pdfId: number,
 ) {
+  // make the parent element modal visible
   const targetParentDifId: string = 'modals';
   const targetParentDif: HTMLDivElement = document.getElementById(
     targetParentDifId,
   ) as HTMLDivElement;
-  const discriptionDiv: HTMLDivElement = document.getElementById(
+  const descriptionDiv: HTMLDivElement = document.getElementById(
     'modal-description',
   ) as HTMLDivElement;
-  discriptionDiv.removeAttribute('hidden');
+  descriptionDiv.removeAttribute('hidden');
   targetParentDif.parentElement.classList.add('wrapper');
 
   const cardHeader: string = `
@@ -652,18 +665,14 @@ async function handleManualChecking(
   </div>
   `;
 
-  // const card1: string = `
-  // <div class="card">
-  //   ${cardHeader}
-  //   ${cardBody}
-  // </div>`;
-
+  // create, style and append item div to parent element
   const card: HTMLDivElement = document.createElement('div');
   card.classList.add('card');
   card.innerHTML = cardHeader + cardBody;
 
   targetParentDif.appendChild(card);
 
+  // gotta get the card body div again because we passed it as string instead of Element
   const cardBodyEl: HTMLDivElement = document.getElementById(
     'modal-body-' + pdfId,
   ) as HTMLDivElement;
@@ -685,9 +694,11 @@ async function renderPdfOnCanvas(
   canvas.height = viewport.height;
   canvas.width = viewport.width;
 
-  // let task = await page.render({ canvasContext, viewport });
-  // let data = [];
-  // data.push(canvas.toDataURL('image/jpeg')); // this would get the data as "jpeg string"
+  /*
+  let task = await page.render({ canvasContext, viewport });
+  let data = [];
+  data.push(canvas.toDataURL('image/jpeg')); // this would get the data as "jpeg string"
+  */
 
   await page.render({ canvasContext, viewport });
 
@@ -712,7 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
   holidayLibrary = globalThis.holiday;
   holidayLibrary.setState('he');
 
-  // initialize progressbar classes
+  // initialize progressBar classes
   progressBarSZListRead = new ProgressBar(
     0,
     'StundenZettel',
@@ -727,6 +738,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'warning',
   );
 
+  /**
+   * Add EventListeners to inputs and buttons
+   */
   contractsInput.addEventListener('change', async () => {
     if (contractsInput.files[0] !== undefined) {
       await handleContractListInput(contractsInput.files[0]);
@@ -762,6 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.scroll(0, window.outerHeight);
   });
 
+  // Functions called by EventListeners
   function enableValidation() {
     let contractsUploaded = ContractList.contracts.length > 0;
     let szListUploaded = StundenzettelList.length > 0;
