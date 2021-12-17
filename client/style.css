@@ -146,10 +146,14 @@ canvas {
 }
 
 .card > .card-header {
+  margin: 0.5rem auto;
+  padding: 0.25rem 0.4rem;
   display: flex;
   width: 80%;
   justify-content: center;
   border-radius: 1rem 1rem;
+  background-color: #ff8300;
+  opacity: 0.9;
 }
 
 .modal-dialog {
