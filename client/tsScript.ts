@@ -568,6 +568,7 @@ async function renderSignatureCheck() {
       console.log(target);
 
       alert('hallo popo');
+      
     });
 
     carouselInner.appendChild(carouselItemDiv);
@@ -621,7 +622,7 @@ async function handleManualChecking(
   <div class="card-header" id=heading-${pdfId}>
     <h5 class="mb-0">
       <button
-        class="btn btn-warning"
+        class="btn"
         data-toggle="modal"
         data-target="#modal-${pdfId}"
       >
