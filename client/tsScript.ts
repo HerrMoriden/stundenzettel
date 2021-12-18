@@ -783,12 +783,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (szListUploaded && contractsUploaded) {
       validateBtn.classList.remove('disabled');
-      validateBtn.classList.toggle('blob');
     }
   }
 
   function disableValidation() {
-    validateBtn.classList.remove('blob');
     validateBtn.classList.add('disabled');
   }
 
