@@ -545,36 +545,39 @@ const createCarouselControlButton = (type: string) => {
   controlBtn.appendChild(textSpan);
 
   controlBtn.addEventListener('click', () => {
-    const descIdentP: HTMLParagraphElement = document.getElementById(
-      'descriptiveIdentifier',
-    ) as HTMLParagraphElement;
-    let idCurrSz = descIdentP.getAttribute('data-current-sz');
-
-    let nextIdSz = (type == 'prev' ? -1 : 1) + Number(idCurrSz);
-
-    descIdentP.innerHTML = '';
-    descIdentP.innerHTML =
-      document
-        .getElementById('canvas-' + nextIdSz.toString())
-        .getAttribute('data-sz-name') +
-      ': ' +
-      document
-        .getElementById('canvas-' + nextIdSz.toString())
-        .getAttribute('data-sz-month') +
-      '.';
-
-    console.log(
-      document
-        .getElementById('canvas-' + idCurrSz)
-        .getAttribute('data-sz-name'),
-    );
+    changeNameMonthForSlide(type);
   });
 
   return controlBtn;
 };
 
-function changeNameMonthForSlide() {
+function changeNameMonthForSlide(type: string) {
+  let descIdentP: HTMLParagraphElement = document.getElementById(
+    'descriptiveIdentifier',
+  ) as HTMLParagraphElement;
+  let idCurrSz = () => Number(descIdentP.getAttribute('data-current-sz'));
 
+  let nextIdSz = (type == 'prev' ? -1 : 1) + idCurrSz();
+
+  descIdentP.innerHTML = '';
+  descIdentP.innerHTML =
+    document
+      .getElementsByClassName('carousel-item active')[0]
+      .getElementsByTagName('canvas')[0]
+      .getAttribute('data-sz-month') +
+    ': ' +
+    document
+      .getElementsByClassName('carousel-item active')[0]
+      .getElementsByTagName('canvas')[0]
+      .getAttribute('data-sz-month') +
+    '.';
+
+  console.log(
+    document
+      .getElementsByClassName('carousel-item active')[0]
+      .getElementsByTagName('canvas')[0]
+      .getAttribute('data-sz-month'),
+  );
 }
 
 async function renderSignatureCheck() {
@@ -605,10 +608,10 @@ async function renderSignatureCheck() {
     // create and style the item div (parent) for the canvas
     let carouselItemDiv: HTMLDivElement = document.createElement('div');
     carouselItemDiv.setAttribute('data-target', i.toString());
-    carouselItemDiv.classList.add(
-      'carousel-item',
-      i == 0 ? 'active' : 'noClass', // cant pass empty string thats why "noClass"
-    );
+    carouselItemDiv.classList.add('carousel-item');
+    if (i == 0) {
+      carouselItemDiv.classList.add('active');
+    }
 
     // add clickeventhandler to Carouselitem to mark as unSigned
     carouselItemDiv.addEventListener('click', (target) => {
