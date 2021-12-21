@@ -555,16 +555,13 @@ function changeNameMonthForSlide(type: string) {
   let descIdentP: HTMLParagraphElement = document.getElementById(
     'descriptiveIdentifier',
   ) as HTMLParagraphElement;
-  let idCurrSz = () => Number(descIdentP.getAttribute('data-current-sz'));
-
-  let nextIdSz = (type == 'prev' ? -1 : 1) + idCurrSz();
 
   descIdentP.innerHTML = '';
   descIdentP.innerHTML =
     document
       .getElementsByClassName('carousel-item active')[0]
       .getElementsByTagName('canvas')[0]
-      .getAttribute('data-sz-month') +
+      .getAttribute('data-sz-name') +
     ': ' +
     document
       .getElementsByClassName('carousel-item active')[0]
@@ -819,6 +816,8 @@ document.addEventListener('DOMContentLoaded', () => {
           renderSignatureCheck();
           showScrollButton();
         });
+        console.log(StundenzettelList);
+
       });
     }
   });

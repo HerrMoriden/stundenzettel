@@ -502,14 +502,12 @@ var createCarouselControlButton = function (type) {
 };
 function changeNameMonthForSlide(type) {
     var descIdentP = document.getElementById('descriptiveIdentifier');
-    var idCurrSz = function () { return Number(descIdentP.getAttribute('data-current-sz')); };
-    var nextIdSz = (type == 'prev' ? -1 : 1) + idCurrSz();
     descIdentP.innerHTML = '';
     descIdentP.innerHTML =
         document
             .getElementsByClassName('carousel-item active')[0]
             .getElementsByTagName('canvas')[0]
-            .getAttribute('data-sz-month') +
+            .getAttribute('data-sz-name') +
             ': ' +
             document
                 .getElementsByClassName('carousel-item active')[0]
@@ -722,6 +720,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                     renderSignatureCheck();
                                     showScrollButton();
                                 });
+                                console.log(StundenzettelList);
                                 return [2 /*return*/];
                             });
                         }); })];
