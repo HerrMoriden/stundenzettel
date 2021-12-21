@@ -544,8 +544,38 @@ const createCarouselControlButton = (type: string) => {
   controlBtn.appendChild(iconSpan);
   controlBtn.appendChild(textSpan);
 
+  controlBtn.addEventListener('click', () => {
+    const descIdentP: HTMLParagraphElement = document.getElementById(
+      'descriptiveIdentifier',
+    ) as HTMLParagraphElement;
+    let idCurrSz = descIdentP.getAttribute('data-current-sz');
+
+    let nextIdSz = (type == 'prev' ? -1 : 1) + Number(idCurrSz);
+
+    descIdentP.innerHTML = '';
+    descIdentP.innerHTML =
+      document
+        .getElementById('canvas-' + nextIdSz.toString())
+        .getAttribute('data-sz-name') +
+      ': ' +
+      document
+        .getElementById('canvas-' + nextIdSz.toString())
+        .getAttribute('data-sz-month') +
+      '.';
+
+    console.log(
+      document
+        .getElementById('canvas-' + idCurrSz)
+        .getAttribute('data-sz-name'),
+    );
+  });
+
   return controlBtn;
 };
+
+function changeNameMonthForSlide() {
+
+}
 
 async function renderSignatureCheck() {
   const targetCarouselDif: HTMLDivElement = document.getElementById(
@@ -555,6 +585,9 @@ async function renderSignatureCheck() {
   const carouselInner: HTMLDivElement = document.createElement(
     'DIV',
   ) as HTMLDivElement;
+  const descIdentP: HTMLParagraphElement = document.getElementById(
+    'descriptiveIdentifier',
+  ) as HTMLParagraphElement;
 
   carouselInner.classList.add('carousel-inner');
 
@@ -562,6 +595,12 @@ async function renderSignatureCheck() {
 
   for (let i = 0; i < ValidatedSZList.length; i++) {
     let sz: StundenZettel = ValidatedSZList[i];
+
+    if (i == 0) {
+      descIdentP.setAttribute('data-current-sz', i.toString());
+      descIdentP.innerText = '';
+      descIdentP.innerText = sz.name + ': ' + sz.month + '.';
+    }
 
     // create and style the item div (parent) for the canvas
     let carouselItemDiv: HTMLDivElement = document.createElement('div');
@@ -596,15 +635,18 @@ async function renderSignatureCheck() {
     coverupDivLeft.classList.add('coverup');
     carouselItemDiv.appendChild(coverupDivLeft);
 
-    let canvas = await renderPdfOnCanvas(carouselItemDiv, sz.raw, 3);
+    let canvas = await renderPdfOnCanvas(carouselItemDiv, sz.raw, 2, i);
 
     canvas.setAttribute(
       'style',
-      'bottom: 0;' +
+      'bottom: -70%;' +
         'right: ' +
-        (carouselItemDiv.offsetWidth / 2 - canvas.width * 0.25).toString() +
-        'px;',
+        // (carouselItemDiv.offsetWidth / 2 - canvas.width * 0.25).toString() +
+        // 'px;',
+        '25%;',
     );
+    canvas.setAttribute('data-sz-name', sz.name);
+    canvas.setAttribute('data-sz-month', sz.month);
 
     let coverupDivRight: HTMLDivElement = document.createElement('div');
     coverupDivRight.classList.add('coverup');
@@ -684,9 +726,15 @@ async function renderPdfOnCanvas(
   appendEl: HTMLElement,
   pdf: Pdf,
   scale: number = 1,
+  id: number = null,
 ) {
   const canvas: HTMLCanvasElement = document.createElement('canvas');
   appendEl.appendChild(canvas);
+
+  if (id !== null) {
+    canvas.id = 'canvas-' + id;
+  }
+
   let canvasContext = canvas.getContext('2d');
   let page = await pdf.getPage(1);
 

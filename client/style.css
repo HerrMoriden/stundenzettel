@@ -29,24 +29,6 @@ thead > tr > td {
   background-color: rgba(69, 69, 69, 0.5);
 }
 
-.bg-circle {
-  background-blend-mode: multiply;
-  height: 135vh;
-  width: 135vh;
-  position: absolute;
-  z-index: -4;
-}
-
-.right-corner {
-  background: linear-gradient(90deg, #979fa6, #196bbe, #8a171700);
-  clip-path: circle(35% at 70rem);
-}
-
-.left-corner {
-  background: linear-gradient(270deg, #979fa6, #196bbe, #8a171700);
-  clip-path: circle(25% at 0 75%);
-}
-
 canvas {
   position: absolute;
   z-index: -5;
@@ -147,7 +129,7 @@ canvas {
   width: 80%;
   justify-content: center;
   border-radius: 1rem 1rem;
-  background-color: #ff8300;
+  background-color: #e2e2e2;
   opacity: 0.9;
 }
 
