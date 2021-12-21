@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>SZ-Validator</title>
+    <!--    <script src="main.js"></script>-->
+    <!--    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.7.570/build/pdf.min.js"></script>-->
+    <!--    <script src="https://cdn.jsdelivr.net/npm/pdf2json@1.2.1/pdfparser.min.js"></script>-->
+    <!--    <script src="bundle.js"></script>-->
+    <!--&lt;!&ndash;    <script src="https://cdn.jsdelivr.net/npm/date-holidays@3.6.0/dist/umd.min.js"></script>&ndash;&gt; may need this later for checking if a day is a holiday-->
+    <script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/holiday-de@1.1.3/holiday-de.js"></script>
+    <!--    <script src="https://cdn.jsdelivr.net/npm/german-holiday@1.2.0/german-holiday.js"></script>-->
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+      integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+      crossorigin="anonymous"
+    />
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"
+    ></script>
+    <!-- <script type="application/javascript" src="script.js"></script> -->
+    <link rel="stylesheet" href="style.css" />
+    <script type="application/javascript" src="tsScript.js"></script>
+    <!-- <script src="distraction.js"></script> -->
+  </head>
+
+  <body>
+    <div id="bodyDiv">
+      <div class="jumbotron my-5">
+        <div>
+          <h1 class="display-4">Stundenzettel-Validator</h1>
+        </div>
+      </div>
+
+      <div class="wrapper">
+        <div class="input-group flex-nowrap wrapper">
+          <div>
+            <label for="uploadInputList">Stunden der Tutor:innen</label>
+            <input
+              type="file"
+              id="uploadInputList"
+              multiple
+              class="form-control"
+              placeholder="upload Files"
+              aria-label="FilesUpload"
+              aria-describedby="addon-wrapping"
+            />
+          </div>
+          <div>
+            <label for="uploadInputSZ"
+              >Stundenzettel <small>(multi file upload)</small></label
+            >
+            <input
+              type="file"
+              id="uploadInputSZ"
+              webkitdirectory
+              directory
+              multiple
+              class="form-control"
+              placeholder="upload Files"
+              aria-label="FilesUpload"
+              aria-describedby="addon-wrapping"
+              disabled
+            />
+          </div>
+        </div>
+        <!-- PROGRESS BARS -->
+        <div class="prog-bar">
+          <div id="progress-bar-target-diff"></div>
+        </div>
+
+        <div class="flex-nowrap justify-content-center" style="padding: 2rem">
+          <div>
+            <button
+              class="btn disabled"
+              type="button"
+              id="startValidationButton"
+            >
+              Validate
+            </button>
+          </div>
+        </div>
+
+        <div id="scrollArrow" disabled hidden>
+          <button>&darr;</button>
+        </div>
+      </div>
+
+      <!-- MANUAL CHECKING -->
+      <div class="modalwrapper">
+        <div id="modal-description" hidden>
+          <h2>Manual Checking</h2>
+          <h6>[Click for view]</h6>
+        </div>
+        <div id="modals"></div>
+      </div>
+
+      <div id="mySweetLittleCarousel" class="carousel wrapper">
+        <div id="carousel-description">
+          <h5>
+            Hier sind alle eingelesenen Stundenzettel zur manuellen Überprüfung
+            der Unterschriften.
+          </h5>
+          <p>
+            [Stundenzettel anklicken um diesen als "nicht signiert" zu
+            markieren.]
+          </p>
+          <p id="descriptiveIdentifier">
+          </p>
+        </div>
+        <div
+          id="carousel-parent"
+          class="carousel"
+          data-ride="carousel"
+          data-interval="false"
+        >
+          <!-- <div class="carousel-indicators">
+          <button
+            type="button"
+            data-bs-target="#carousel-parent"
+            data-bs-slide-to="0"
+            class="active"
+            aria-current="true"
+            aria-label="Slide 1"
+          ></button>
+          <button
+            type="button"
+            data-bs-target="#carousel-parent"
+            data-bs-slide-to="1"
+            aria-label="Slide 2"
+          ></button>
+          <button
+            type="button"
+            data-bs-target="#carousel-parent"
+            data-bs-slide-to="2"
+            aria-label="Slide 3"
+          ></button>
+        </div>-->
+        </div>
+      </div>
+      <!-- RESULT TABLE -->
+      <div class="flex-nowrap">
+        <table id="table">
+          <tbody id="tBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
