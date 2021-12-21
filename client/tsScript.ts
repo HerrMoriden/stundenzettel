@@ -568,13 +568,6 @@ function changeNameMonthForSlide(type: string) {
       .getElementsByTagName('canvas')[0]
       .getAttribute('data-sz-month') +
     '.';
-
-  console.log(
-    document
-      .getElementsByClassName('carousel-item active')[0]
-      .getElementsByTagName('canvas')[0]
-      .getAttribute('data-sz-month'),
-  );
 }
 
 async function renderSignatureCheck() {
